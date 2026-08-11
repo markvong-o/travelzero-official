@@ -1,59 +1,55 @@
 /* TravelZero Design System */
 
 :root {
-  /* Primary: Burnt orange / terracotta — the mid-century travel-poster
-     sunset tone, standing in for Navan's brand violet */
-  --color-primary: #C1512F;
-  --color-primary-light: #D97B54;
-  --color-primary-dark: #973D22;
+  /* Primary: Indigo-violet — the Navan brand color */
+  --color-primary: #4F3CF0;
+  --color-primary-light: #6B5BF5;
+  --color-primary-dark: #3B29C4;
 
-  /* Accent: Deep teal-green — the gradient partner to terracotta, used for
+  /* Accent: Teal — the gradient partner to the brand violet, used for
      CTAs, active states, focus rings, and the signature tonal gradient. */
-  --color-accent: #2F6E5E;
-  --color-accent-light: #4A8C7A;
-  --color-accent-dark: #1F4F42;
+  --color-accent: #00C2A8;
+  --color-accent-light: #2FD9C1;
+  --color-accent-dark: #009583;
 
-  /* Secondary: Mustard / ochre — era-accurate highlight tone for tags,
-     badges, and secondary emphasis */
-  --color-secondary: #D9A02C;
-  --color-secondary-light: #E6B655;
-  --color-secondary-dark: #B37F1E;
+  /* Secondary / Tertiary: reserved for data-viz variety (chart series,
+     destination-card accents) — not used as brand colors. */
+  --color-secondary: #7A5CFA;
+  --color-secondary-light: #9C86FB;
+  --color-secondary-dark: #5B3FD1;
 
-  /* Tertiary: Avocado — a third accent for variety across destination
-     cards and data visualization */
-  --color-tertiary: #6B7A4F;
-  --color-tertiary-light: #869569;
-  --color-tertiary-dark: #52603A;
+  --color-tertiary: #0EA5E9;
+  --color-tertiary-light: #45C4F5;
+  --color-tertiary-dark: #0B7FB5;
 
-  /* Neutrals: Warm cream-to-teak ramp — near-black teak brown through
-     warm off-white, replacing the old cool violet-tinted grays */
-  --color-neutral-50: #F4EEE1;
-  --color-neutral-100: #ECE3D1;
-  --color-neutral-200: #DDD0B7;
-  --color-neutral-300: #C7B698;
-  --color-neutral-400: #A69474;
-  --color-neutral-500: #8A785D;
-  --color-neutral-600: #6B5D48;
-  --color-neutral-700: #4F4433;
-  --color-neutral-800: #372E22;
-  --color-neutral-900: #2B2118;
+  /* Neutrals: cool slate ramp — flat white cards with hairline borders */
+  --color-neutral-50: #F8FAFC;
+  --color-neutral-100: #F1F5F9;
+  --color-neutral-200: #E2E8F0;
+  --color-neutral-300: #CBD5E1;
+  --color-neutral-400: #94A3B8;
+  --color-neutral-500: #64748B;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1E293B;
+  --color-neutral-900: #0F172A;
 
   /* Status colors */
-  --color-success: #4B7B3F;
-  --color-warning: #D9A02C;
-  --color-error: #B8452F;
-  --color-info: #3D7A8B;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
 
-  /* Gradient tokens — sunset-to-sea tonal treatment (terracotta to teal),
+  /* Gradient tokens — Navan's signature tonal violet-to-teal treatment,
      used for hero overlays, primary CTAs, and progress fills. */
   --gradient-brand: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
-  --gradient-brand-soft: linear-gradient(135deg, rgba(193, 81, 47, 0.12) 0%, rgba(47, 110, 94, 0.12) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(79, 60, 240, 0.12) 0%, rgba(0, 194, 168, 0.12) 100%);
 
-  /* Shadows — soft, premium elevation with a faint warm teak tint */
-  --shadow-sm: 0 1px 2px rgba(43, 30, 20, 0.08);
-  --shadow-md: 0 4px 12px rgba(43, 30, 20, 0.10);
-  --shadow-lg: 0 10px 24px rgba(43, 30, 20, 0.14);
-  --shadow-xl: 0 20px 40px rgba(43, 30, 20, 0.18);
+  /* Shadows — soft, flat elevation with a faint cool-slate tint */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 8px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 8px 16px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 16px 32px rgba(15, 23, 42, 0.10);
 
   /* Flat surfaces (opaque, no blur) — used for any card/panel/popover that
      needs to sit visibly above the page background */
@@ -62,7 +58,7 @@
   --surface-shadow: var(--shadow-sm);
 
   /* Typography */
-  --font-sans: 'Jost Variable', 'Jost', sans-serif;
+  --font-sans: 'Geist Variable', sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -122,19 +118,17 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
+  font-weight: 550;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 h1 {
   font-size: var(--font-size-4xl);
-  letter-spacing: 0.01em;
 }
 
 h2 {
   font-size: var(--font-size-3xl);
-  letter-spacing: 0.005em;
 }
 
 h3 {
