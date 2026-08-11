@@ -1,0 +1,128 @@
+.destination-card {
+  background: var(--surface-card);
+  border: var(--surface-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.destination-card:hover {
+  border-color: var(--color-neutral-300);
+  box-shadow: var(--shadow-md);
+}
+
+.destination-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--color-neutral-300), var(--color-neutral-200));
+}
+
+.destination-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.destination-card:hover .destination-photo {
+  transform: scale(1.05);
+}
+
+.bg-rome {
+  background: linear-gradient(135deg, #C1512F, #E6935F);
+}
+
+.bg-amalfi {
+  background: linear-gradient(135deg, #2F6E5E, #D9A02C);
+}
+
+.bg-tuscany {
+  background: linear-gradient(135deg, #D9A02C, #6B7A4F);
+}
+
+.bg-como {
+  background: linear-gradient(135deg, #3D7A8B, #4A8C7A);
+}
+
+.favorite-btn {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: var(--surface-card);
+  border: var(--surface-border);
+  border-radius: var(--radius-full);
+  width: 40px;
+  height: 40px;
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.1);
+}
+
+.favorite-btn.favorited {
+  background: var(--color-accent-light);
+}
+
+.destination-content {
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+}
+
+.destination-content h3 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.destination-tagline {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.destination-meta {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.destination-description {
+  color: var(--color-neutral-700);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: auto;
+}

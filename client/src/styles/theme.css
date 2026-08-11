@@ -1,0 +1,281 @@
+/* TravelZero Design System */
+
+:root {
+  /* Primary: Burnt orange / terracotta — the mid-century travel-poster
+     sunset tone, standing in for Navan's brand violet */
+  --color-primary: #C1512F;
+  --color-primary-light: #D97B54;
+  --color-primary-dark: #973D22;
+
+  /* Accent: Deep teal-green — the gradient partner to terracotta, used for
+     CTAs, active states, focus rings, and the signature tonal gradient. */
+  --color-accent: #2F6E5E;
+  --color-accent-light: #4A8C7A;
+  --color-accent-dark: #1F4F42;
+
+  /* Secondary: Mustard / ochre — era-accurate highlight tone for tags,
+     badges, and secondary emphasis */
+  --color-secondary: #D9A02C;
+  --color-secondary-light: #E6B655;
+  --color-secondary-dark: #B37F1E;
+
+  /* Tertiary: Avocado — a third accent for variety across destination
+     cards and data visualization */
+  --color-tertiary: #6B7A4F;
+  --color-tertiary-light: #869569;
+  --color-tertiary-dark: #52603A;
+
+  /* Neutrals: Warm cream-to-teak ramp — near-black teak brown through
+     warm off-white, replacing the old cool violet-tinted grays */
+  --color-neutral-50: #F4EEE1;
+  --color-neutral-100: #ECE3D1;
+  --color-neutral-200: #DDD0B7;
+  --color-neutral-300: #C7B698;
+  --color-neutral-400: #A69474;
+  --color-neutral-500: #8A785D;
+  --color-neutral-600: #6B5D48;
+  --color-neutral-700: #4F4433;
+  --color-neutral-800: #372E22;
+  --color-neutral-900: #2B2118;
+
+  /* Status colors */
+  --color-success: #4B7B3F;
+  --color-warning: #D9A02C;
+  --color-error: #B8452F;
+  --color-info: #3D7A8B;
+
+  /* Gradient tokens — sunset-to-sea tonal treatment (terracotta to teal),
+     used for hero overlays, primary CTAs, and progress fills. */
+  --gradient-brand: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(193, 81, 47, 0.12) 0%, rgba(47, 110, 94, 0.12) 100%);
+
+  /* Shadows — soft, premium elevation with a faint warm teak tint */
+  --shadow-sm: 0 1px 2px rgba(43, 30, 20, 0.08);
+  --shadow-md: 0 4px 12px rgba(43, 30, 20, 0.10);
+  --shadow-lg: 0 10px 24px rgba(43, 30, 20, 0.14);
+  --shadow-xl: 0 20px 40px rgba(43, 30, 20, 0.18);
+
+  /* Flat surfaces (opaque, no blur) — used for any card/panel/popover that
+     needs to sit visibly above the page background */
+  --surface-card: #FFFFFF;
+  --surface-border: 1px solid var(--color-neutral-200);
+  --surface-shadow: var(--shadow-sm);
+
+  /* Typography */
+  --font-sans: 'Jost Variable', 'Jost', sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Border radius — smaller, more architectural than the old rounded-pill
+     "app" feel */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.875rem;
+  --radius-full: 9999px;
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-modal: 1050;
+  --z-toast: 1100;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-neutral-900);
+  background-color: var(--color-neutral-50);
+}
+
+/* Typography */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+  letter-spacing: 0.01em;
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+  letter-spacing: 0.005em;
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+}
+
+p {
+  margin-bottom: var(--space-md);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--color-primary-light);
+  text-decoration: underline;
+}
+
+/* Utility Classes */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gap-sm {
+  gap: var(--space-sm);
+}
+
+.gap-md {
+  gap: var(--space-md);
+}
+
+.gap-lg {
+  gap: var(--space-lg);
+}
+
+.p-md {
+  padding: var(--space-md);
+}
+
+.p-lg {
+  padding: var(--space-lg);
+}
+
+.m-md {
+  margin: var(--space-md);
+}
+
+.m-lg {
+  margin: var(--space-lg);
+}
+
+.mt-md {
+  margin-top: var(--space-md);
+}
+
+.mt-lg {
+  margin-top: var(--space-lg);
+}
+
+.mb-md {
+  margin-bottom: var(--space-md);
+}
+
+.mb-lg {
+  margin-bottom: var(--space-lg);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--color-neutral-600);
+  font-size: var(--font-size-sm);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.bg-neutral-100 {
+  background-color: var(--color-neutral-100);
+}
+
+.rounded {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Flat surface card — opaque, hairline border, barely-there shadow. No blur
+   anywhere in this design; separation comes from whitespace + the border. */
+.surface-card {
+  background: var(--surface-card);
+  border: var(--surface-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--surface-shadow);
+}

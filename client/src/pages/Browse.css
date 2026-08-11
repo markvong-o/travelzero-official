@@ -1,0 +1,98 @@
+.browse-page {
+  flex: 1;
+}
+
+.guest-banner {
+  background: var(--surface-card);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-neutral-300);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-700);
+}
+
+.session-id {
+  font-family: monospace;
+  background: var(--color-neutral-100);
+  border: var(--surface-border);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.hero-section {
+  position: relative;
+  background: url('/images/hero-italy.jpg') center 65% / cover no-repeat;
+  color: white;
+  min-height: 440px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--space-3xl) var(--space-lg);
+  margin-bottom: var(--space-3xl);
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20, 18, 16, 0.72) 0%, rgba(20, 18, 16, 0) 60%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  text-align: center;
+}
+
+.hero-content h1 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-4xl);
+}
+
+.hero-content p {
+  max-width: 600px;
+  margin: 0 auto;
+  font-size: var(--font-size-lg);
+  opacity: 0.95;
+}
+
+.destinations-section {
+  margin-bottom: var(--space-3xl);
+}
+
+.destinations-section h2 {
+  margin-bottom: var(--space-2xl);
+  color: var(--color-primary);
+}
+
+.destinations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-xl);
+  margin-bottom: var(--space-3xl);
+}
+
+@media (max-width: 768px) {
+  .guest-banner {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
+  }
+
+  .hero-section {
+    min-height: 360px;
+  }
+
+  .hero-content h1 {
+    font-size: var(--font-size-3xl);
+  }
+
+  .destinations-grid {
+    grid-template-columns: 1fr;
+  }
+}
