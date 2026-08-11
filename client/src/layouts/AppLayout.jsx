@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Compass, LayoutDashboard, Sparkles, FlaskConical } from 'lucide-react';
+import { Menu, Compass, LayoutDashboard, Sparkles, FlaskConical, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AppSidebar } from '../components/AppSidebar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -71,6 +72,18 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <Button
+        asChild
+        size="sm"
+        variant="secondary"
+        className="fixed bottom-6 right-6 z-40 gap-2 rounded-full shadow-lg"
+        title="Preview TravelZero the way Emma sees it on her phone"
+      >
+        <Link to={`/mobile?preview=${encodeURIComponent(location.pathname)}`}>
+          <Smartphone className="size-4" />
+          View as Mobile App
+        </Link>
+      </Button>
     </div>
   );
 }
