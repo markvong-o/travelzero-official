@@ -14,7 +14,7 @@ export function LoyaltyMeter({ points = 0, maxPoints = 100000 }) {
   const tier = TIERS.find((t) => points >= t.min);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+    <div className="rounded-xl bg-card p-6 shadow-sm ring-1 ring-foreground/10">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Loyalty Points</h3>
         <span
@@ -25,7 +25,9 @@ export function LoyaltyMeter({ points = 0, maxPoints = 100000 }) {
         </span>
       </div>
 
-      <div className="mb-4 text-3xl font-bold text-accent">{points.toLocaleString()}</div>
+      <div className="mb-4 text-3xl font-bold tabular-nums tracking-tight text-accent">
+        {points.toLocaleString()}
+      </div>
 
       <div className="mb-6 h-3 w-full overflow-hidden rounded-full bg-muted">
         <div

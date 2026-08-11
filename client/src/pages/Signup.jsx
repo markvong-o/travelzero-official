@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Fingerprint, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useWebAuthnPrompt, WebAuthnPrompt } from '../components/WebAuthnPrompt';
@@ -126,7 +127,7 @@ export default function Signup() {
                 disabled={loading}
                 className={methodButtonClass(method === 'passkey')}
               >
-                <span>🔐</span>
+                <Fingerprint className="size-4 shrink-0" />
                 <span>Sign up with Passkey</span>
               </button>
               <button
@@ -135,7 +136,7 @@ export default function Signup() {
                 disabled={loading}
                 className={methodButtonClass(method === 'password')}
               >
-                <span>🔑</span>
+                <KeyRound className="size-4 shrink-0" />
                 <span>Sign up with Password</span>
               </button>
             </div>

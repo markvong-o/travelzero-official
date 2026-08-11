@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
+import { Metric } from '../components/Metric';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,16 +15,18 @@ import api from '../api.js';
 
 function BucketProgress({ label, bucket, tint }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
+    <div className="flex flex-col gap-2 rounded-lg bg-muted/60 p-4">
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs tabular-nums text-muted-foreground">
           {bucket.percentage}% of total signups
         </span>
       </div>
       <div className="flex items-baseline justify-between text-sm">
         <span className="text-muted-foreground">Completion Rate</span>
-        <span className="text-2xl font-bold text-foreground">{bucket.completionRate}%</span>
+        <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+          {bucket.completionRate}%
+        </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -81,7 +84,7 @@ export default function ExperimentCenter() {
         signup with an experiment bucket, paired with your own analytics.
       </p>
 
-      <Card>
+      <Card variant="raised">
         <CardHeader className="flex-row items-start justify-between gap-4">
           <div>
             <CardTitle className="text-base">{stats.experimentName}</CardTitle>
@@ -90,18 +93,19 @@ export default function ExperimentCenter() {
           <Badge variant={stats.status === 'active' ? 'default' : 'outline'}>{stats.status}</Badge>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Total Signups
-              </p>
-              <p className="text-2xl font-bold text-foreground">{stats.totalSignups}</p>
-            </div>
-            <div className="rounded-lg bg-muted px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Winner</p>
-              <p className="text-2xl font-bold text-accent">{stats.winner?.toUpperCase()}</p>
-            </div>
-          </div>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <Metric
+              label="Total Signups"
+              value={stats.totalSignups}
+              className="rounded-lg bg-muted/60 px-4 py-3"
+            />
+            <Metric
+              label="Winner"
+              value={stats.winner?.toUpperCase()}
+              tone="accent"
+              className="rounded-lg bg-muted/60 px-4 py-3"
+            />
+          </dl>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <BucketProgress label="Passkey" bucket={stats.buckets.passkey} tint="bg-primary" />

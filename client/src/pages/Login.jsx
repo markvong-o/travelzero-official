@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Fingerprint, KeyRound, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useWebAuthnPrompt, WebAuthnPrompt } from '../components/WebAuthnPrompt';
@@ -7,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { isAuth0Configured } from '../lib/auth-config';
 
 const METHODS = [
-  { id: 'passkey', icon: '🔐', label: 'Sign in with Passkey' },
-  { id: 'password', icon: '🔑', label: 'Use password instead' },
-  { id: 'email_code', icon: '📧', label: 'Get a login code by email' },
+  { id: 'passkey', Icon: Fingerprint, label: 'Sign in with Passkey' },
+  { id: 'password', Icon: KeyRound, label: 'Use password instead' },
+  { id: 'email_code', Icon: Mail, label: 'Get a login code by email' },
 ];
 
 function methodButtonClass(active) {
@@ -99,7 +100,7 @@ export default function Login() {
             </div>
 
             <div className="mb-6 flex flex-col gap-2">
-              {METHODS.map(({ id, icon, label }) => (
+              {METHODS.map(({ id, Icon, label }) => (
                 <button
                   key={id}
                   type="button"
@@ -107,7 +108,7 @@ export default function Login() {
                   disabled={loading}
                   className={methodButtonClass(method === id)}
                 >
-                  <span>{icon}</span>
+                  <Icon className="size-4 shrink-0" />
                   <span>{label}</span>
                 </button>
               ))}

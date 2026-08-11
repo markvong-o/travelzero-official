@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Sparkles, Plane } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { LoyaltyMeter } from '../components/LoyaltyMeter';
+import { Metric } from '../components/Metric';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -93,7 +95,7 @@ export default function Dashboard() {
               {profile.favorites.map((fav) => (
                 <div
                   key={fav.id}
-                  className="flex items-center gap-3 rounded-lg border border-border p-3"
+                  className="flex items-center gap-3 rounded-lg bg-muted/60 p-3"
                 >
                   <div className={`size-10 shrink-0 rounded-md bg-${fav.color}`} />
                   <div>
@@ -104,9 +106,10 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-col items-start gap-3 rounded-lg bg-muted/60 p-6">
+              <Heart className="size-5 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                You haven&apos;t added any favorites yet.
+                Select any destination with the heart icon to save it for later reference.
               </p>
               <Button asChild variant="outline">
                 <Link to="/">Browse destinations</Link>
@@ -116,7 +119,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="raised">
         <CardHeader>
           <CardTitle>Your Itinerary</CardTitle>
         </CardHeader>
@@ -127,16 +130,18 @@ export default function Dashboard() {
                 <h3 className="text-lg font-semibold text-foreground">{itinerary.title}</h3>
                 <dl className="mt-3 grid gap-3 sm:grid-cols-3">
                   {[
-                    ['Duration', `${itinerary.duration} days`],
-                    ['Total Cost', `$${itinerary.totalCost}`],
-                    ['Loyalty Points Applied', itinerary.loyaltyPointsApplied],
-                  ].map(([label, value]) => (
-                    <div key={label} className="rounded-lg bg-muted px-3 py-2">
-                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                        {label}
-                      </dt>
-                      <dd className="text-sm font-medium text-foreground">{value}</dd>
-                    </div>
+                    ['Duration', `${itinerary.duration} days`, 'plain'],
+                    ['Total Cost', itinerary.totalCost, 'currency'],
+                    ['Loyalty Points Applied', itinerary.loyaltyPointsApplied, 'plain'],
+                  ].map(([label, value, format]) => (
+                    <Metric
+                      key={label}
+                      label={label}
+                      value={value}
+                      format={format}
+                      size="sm"
+                      className="rounded-lg bg-muted/60 px-3 py-2"
+                    />
                   ))}
                 </dl>
               </div>
@@ -164,7 +169,9 @@ export default function Dashboard() {
                               ))}
                             </ul>
                           </TableCell>
-                          <TableCell className="text-right">${day.estimatedCost}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            ${day.estimatedCost}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -193,7 +200,7 @@ export default function Dashboard() {
                           <TableCell className="text-xs text-muted-foreground">
                             {addOn.bookedBy}
                           </TableCell>
-                          <TableCell className="text-right">${addOn.cost}</TableCell>
+                          <TableCell className="text-right tabular-nums">${addOn.cost}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -211,14 +218,17 @@ export default function Dashboard() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted"
                 >
-                  ✨ Gemini noticed great weather for your trip — open Gemini
+                  <Sparkles className="size-4 shrink-0 text-accent" />
+                  Gemini noticed great weather for your trip — open Gemini
                 </a>
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-start gap-3">
+            <div className="flex flex-col items-start gap-3 rounded-lg bg-muted/60 p-6">
+              <Plane className="size-5 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                You don&apos;t have an itinerary yet.
+                Describe your travel vision and the assistant will build a tailored itinerary
+                that aligns with your preferences and constraints.
               </p>
               <Button asChild variant="outline">
                 <Link to="/assistant">Plan with AI Assistant</Link>

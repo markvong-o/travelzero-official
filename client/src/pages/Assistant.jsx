@@ -7,6 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '../api.js';
 
+// The second prompt leads into the loyalty-points and agent-delegation beats,
+// so keep it as the second option in the demo script.
+const SUGGESTED_PROMPTS = [
+  'Plan me a weekend in Rome under $1,500',
+  'Design a 5-day Italy itinerary using my loyalty points',
+];
+
 // Anonymous users never reach this page — AppLayout redirects to /login
 // before this component mounts.
 export default function Assistant() {
@@ -28,11 +35,9 @@ export default function Assistant() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+  const sendMessage = async (userMessage) => {
+    if (!userMessage.trim() || loading) return;
 
-    const userMessage = input;
     setInput('');
     setMessages((prev) => [...prev, { type: 'user', text: userMessage }]);
     setLoading(true);
@@ -54,6 +59,11 @@ export default function Assistant() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    sendMessage(input);
   };
 
   const handleBookItinerary = async () => {
@@ -100,7 +110,9 @@ export default function Assistant() {
 
   return (
     <div className="grid h-full min-h-0 gap-6 p-6 lg:grid-cols-3 lg:p-8">
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card lg:col-span-2">
+      {/* Deliberately not a <Card>: Card injects py-4 + gap-4 on its root,
+          which breaks the min-h-0 scroll contract for the message list. */}
+      <div className="flex min-h-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 lg:col-span-2">
         <div className="shrink-0 border-b border-border px-6 py-4">
           <h1 className="text-lg font-semibold text-foreground">Travel Assistant</h1>
           <p className="text-sm text-muted-foreground">
@@ -110,17 +122,29 @@ export default function Assistant() {
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
           {messages.length === 0 ? (
-            <div className="m-auto max-w-sm text-center">
-              <span className="text-4xl">✈️</span>
-              <h2 className="mt-3 text-base font-semibold text-foreground">
+            <div className="m-auto flex max-w-sm flex-col items-center text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
+                <Plane className="size-5 text-accent" />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-foreground">
                 Start Planning Your Trip
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Try: &ldquo;Plan me a weekend in Rome under $1,500&rdquo;
+                Describe the trip you have in mind. Pick a starting point below.
               </p>
-              <p className="text-sm text-muted-foreground">
-                or: &ldquo;Design a 5-day Italy itinerary using my loyalty points&rdquo;
-              </p>
+              <div className="mt-4 flex w-full flex-col gap-2">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    disabled={loading}
+                    className="rounded-lg bg-muted/60 px-3 py-2 text-left text-sm text-foreground ring-1 ring-transparent transition hover:bg-muted hover:ring-accent/30"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             messages.map((msg, idx) => (

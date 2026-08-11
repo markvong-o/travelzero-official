@@ -82,7 +82,10 @@ export function AppSidebar() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{user?.email}</p>
               <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-accent">{user?.loyaltyPoints?.toLocaleString() || 0}</span> pts
+                <span className="font-medium tabular-nums text-accent">
+                  {user?.loyaltyPoints?.toLocaleString() || 0}
+                </span>{' '}
+                pts
               </p>
             </div>
             <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />

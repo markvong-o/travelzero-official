@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Heart, MapPin, Thermometer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ export function DestinationCard({ destination, onBook, isFavorite = false, onFav
   };
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:border-slate-300 hover:shadow-md">
+    <div className="group flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all hover:shadow-lg hover:ring-foreground/20">
       <div className="relative aspect-video w-full overflow-hidden">
         {/* bg-{color} is a destination gradient defined in styles/theme.css —
             it shows through until the photo loads. */}
@@ -34,11 +35,11 @@ export function DestinationCard({ destination, onBook, isFavorite = false, onFav
           type="button"
           onClick={handleFavorite}
           title={favorited ? 'Remove from favorites' : 'Add to favorites'}
-          className={`absolute right-4 top-4 flex size-10 items-center justify-center rounded-full border border-border text-lg shadow-sm transition-transform hover:scale-110 ${
-            favorited ? 'bg-accent' : 'bg-card'
+          className={`absolute right-4 top-4 flex size-10 items-center justify-center rounded-full shadow-sm ring-1 ring-foreground/10 transition-transform hover:scale-110 ${
+            favorited ? 'bg-accent text-accent-foreground' : 'bg-card text-muted-foreground'
           }`}
         >
-          {favorited ? '❤️' : '🤍'}
+          <Heart className={`size-4 ${favorited ? 'fill-current' : ''}`} />
         </button>
       </div>
 
@@ -51,8 +52,14 @@ export function DestinationCard({ destination, onBook, isFavorite = false, onFav
         </div>
 
         <div className="flex gap-4 text-sm text-muted-foreground">
-          <span>📍 {destination.region}</span>
-          <span>🌡️ {destination.climate}</span>
+          <span className="flex items-center gap-1.5">
+            <MapPin className="size-3.5 shrink-0" />
+            {destination.region}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Thermometer className="size-3.5 shrink-0" />
+            {destination.climate}
+          </span>
         </div>
 
         <p className="flex-1 text-sm leading-relaxed text-slate-700">{destination.description}</p>
