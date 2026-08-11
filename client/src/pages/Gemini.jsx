@@ -71,7 +71,7 @@ export default function Gemini() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, showSuggestions, booking]);
+  }, [messages, showSuggestions, bookings]);
 
   const pushMessage = (msg) => setMessages((prev) => [...prev, msg]);
 

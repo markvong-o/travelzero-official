@@ -1,14 +1,11 @@
-/* Global Styles */
+/* Element resets. Component styling lives in Tailwind utilities and the
+   shadcn primitives under components/ui — nothing app-level belongs here. */
 
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--color-neutral-50);
-}
-
-main {
-  flex: 1;
 }
 
 button {
@@ -40,77 +37,5 @@ input:focus,
 textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(193, 81, 47, 0.1);
-}
-
-.card {
-  background: white;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  padding: var(--space-lg);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.btn {
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-lg);
-  font-weight: 600;
-  transition: all 0.2s;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  border: none;
-}
-
-.btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: var(--color-primary-light);
-}
-
-.btn-secondary {
-  background-color: var(--color-neutral-200);
-  color: var(--color-neutral-900);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-neutral-300);
-}
-
-.btn-accent {
-  background-color: var(--color-accent);
-  color: white;
-}
-
-.btn-accent:hover:not(:disabled) {
-  background-color: var(--color-accent-light);
-}
-
-.btn-outline {
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
-  background-color: transparent;
-}
-
-.btn-outline:hover:not(:disabled) {
-  background-color: rgba(193, 81, 47, 0.05);
-}
-
-.btn-sm {
-  padding: var(--space-xs) var(--space-md);
-  font-size: var(--font-size-sm);
-}
-
-.btn-lg {
-  padding: var(--space-md) var(--space-2xl);
-  font-size: var(--font-size-lg);
+  box-shadow: 0 0 0 3px rgba(79, 60, 240, 0.12);
 }
