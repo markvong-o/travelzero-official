@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { LoyaltyMeter } from '../components/LoyaltyMeter';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import api from '../api.js';
-import './Dashboard.css';
 
 // Anonymous users never reach this page — AppLayout redirects to /login
 // before this component mounts.
@@ -32,18 +41,12 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <main className="dashboard-page">
-        <div className="loading">Loading your dashboard...</div>
-      </main>
+      <div className="p-8 text-sm text-muted-foreground">Loading your dashboard…</div>
     );
   }
 
   if (!profile) {
-    return (
-      <main className="dashboard-page">
-        <div className="error">Failed to load profile</div>
-      </main>
-    );
+    return <div className="p-8 text-sm text-destructive">Failed to load profile</div>;
   }
 
   const handleShareItinerary = async () => {
@@ -52,7 +55,7 @@ export default function Dashboard() {
       showToast(`Itinerary shared! Code: ${result.shareCode}`, 'success');
     } catch (error) {
       if (error.status === 403) {
-        // Security flag detected - this is handled by SecurityInterstitial
+        // Security flag detected — SecurityInterstitial owns the step-up flow.
         navigate('/security-interstitial');
       } else {
         showToast(error.error || 'Failed to share itinerary', 'error');
@@ -61,132 +64,169 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="dashboard-page">
-      <div className="container">
-        <div className="dashboard-grid">
-          <div className="sidebar">
-            <div className="profile-card">
-              <img
-                src="https://i.pravatar.cc/150?img=47"
-                alt=""
-                className="profile-avatar-photo"
-              />
-              <h2>{profile.email.split('@')[0]}</h2>
-              <p className="profile-email">{profile.email}</p>
-              <p className="profile-meta">Member since {new Date(profile.createdAt).getFullYear()}</p>
-            </div>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 lg:p-10">
+      <header className="flex flex-wrap items-center gap-4">
+        <img
+          src="https://i.pravatar.cc/150?img=47"
+          alt=""
+          className="size-14 rounded-full object-cover ring-1 ring-border"
+        />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {profile.email.split('@')[0]}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {profile.email} · Member since {new Date(profile.createdAt).getFullYear()}
+          </p>
+        </div>
+      </header>
 
-            <div className="loyalty-section">
-              <LoyaltyMeter points={profile.loyaltyPoints} maxPoints={100000} />
-            </div>
-          </div>
+      <LoyaltyMeter points={profile.loyaltyPoints} maxPoints={100000} />
 
-          <div className="main-content">
-            <section className="favorites-section">
-              <h3>Your Favorites</h3>
-              {profile.favorites && profile.favorites.length > 0 ? (
-                <div className="favorites-list">
-                  {profile.favorites.map((fav) => (
-                    <div key={fav.id} className="favorite-item">
-                      <div className={`fav-icon bg-${fav.color}`}></div>
-                      <div className="fav-info">
-                        <h4>{fav.name}</h4>
-                        <p>{fav.region}</p>
-                      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Favorites</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {profile.favorites?.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {profile.favorites.map((fav) => (
+                <div
+                  key={fav.id}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3"
+                >
+                  <div className={`size-10 shrink-0 rounded-md bg-${fav.color}`} />
+                  <div>
+                    <p className="font-medium text-foreground">{fav.name}</p>
+                    <p className="text-xs text-muted-foreground">{fav.region}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">
+                You haven&apos;t added any favorites yet.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/">Browse destinations</Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Itinerary</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          {itinerary ? (
+            <>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">{itinerary.title}</h3>
+                <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ['Duration', `${itinerary.duration} days`],
+                    ['Total Cost', `$${itinerary.totalCost}`],
+                    ['Loyalty Points Applied', itinerary.loyaltyPointsApplied],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-lg bg-muted px-3 py-2">
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {label}
+                      </dt>
+                      <dd className="text-sm font-medium text-foreground">{value}</dd>
                     </div>
                   ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p>You haven't added any favorites yet.</p>
-                  <a href="/" className="btn btn-secondary">
-                    Browse destinations
-                  </a>
-                </div>
-              )}
-            </section>
+                </dl>
+              </div>
 
-            <section className="itinerary-section">
-              <h3>Your Itinerary</h3>
-              {itinerary ? (
-                <div className="itinerary-card">
-                  <h4>{itinerary.title}</h4>
-                  <div className="itinerary-details">
-                    <div className="detail">
-                      <span className="label">Duration:</span>
-                      <span className="value">{itinerary.duration} days</span>
-                    </div>
-                    <div className="detail">
-                      <span className="label">Total Cost:</span>
-                      <span className="value">${itinerary.totalCost}</span>
-                    </div>
-                    <div className="detail">
-                      <span className="label">Loyalty Points Applied:</span>
-                      <span className="value">{itinerary.loyaltyPointsApplied}</span>
-                    </div>
-                  </div>
-
-                  {itinerary.days && itinerary.days.length > 0 && (
-                    <div className="itinerary-days">
-                      <h5>Daily Plan</h5>
+              {itinerary.days?.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-semibold text-foreground">Daily Plan</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16">Day</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead className="w-24 text-right">Est. Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {itinerary.days.map((day) => (
-                        <div key={day.day} className="day-item">
-                          <span className="day-number">Day {day.day}</span>
-                          <div className="day-content">
-                            <h6>{day.title}</h6>
-                            <ul>
-                              {day.activities.map((activity, idx) => (
-                                <li key={idx}>{activity}</li>
+                        <TableRow key={day.day}>
+                          <TableCell className="font-medium">{day.day}</TableCell>
+                          <TableCell>
+                            <p className="font-medium text-foreground">{day.title}</p>
+                            <ul className="mt-1 list-inside list-disc text-xs text-muted-foreground">
+                              {day.activities.map((activity) => (
+                                <li key={activity}>{activity}</li>
                               ))}
                             </ul>
-                            <p className="day-cost">${day.estimatedCost}</p>
-                          </div>
-                        </div>
+                          </TableCell>
+                          <TableCell className="text-right">${day.estimatedCost}</TableCell>
+                        </TableRow>
                       ))}
-                    </div>
-                  )}
-
-                  {itinerary.addOns && itinerary.addOns.length > 0 && (
-                    <div className="add-ons-section">
-                      <h5>Add-ons</h5>
-                      {itinerary.addOns.map((addOn) => (
-                        <div key={addOn.id} className="add-on-item">
-                          <div className="add-on-info">
-                            <h6>{addOn.name}</h6>
-                            <p>{addOn.description}</p>
-                            <small>Booked by {addOn.bookedBy}</small>
-                          </div>
-                          <div className="add-on-cost">${addOn.cost}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <button onClick={handleShareItinerary} className="btn btn-primary">
-                    Share Itinerary
-                  </button>
-
-                  <a
-                    href="/gemini"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted"
-                  >
-                    ✨ Gemini noticed great weather for your trip — open Gemini
-                  </a>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p>You don't have an itinerary yet.</p>
-                  <a href="/assistant" className="btn btn-secondary">
-                    Plan with AI Assistant
-                  </a>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-            </section>
-          </div>
-        </div>
-      </div>
-    </main>
+
+              {itinerary.addOns?.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-semibold text-foreground">Add-ons</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Add-on</TableHead>
+                        <TableHead>Booked by</TableHead>
+                        <TableHead className="w-24 text-right">Cost</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {itinerary.addOns.map((addOn) => (
+                        <TableRow key={addOn.id}>
+                          <TableCell>
+                            <p className="font-medium text-foreground">{addOn.name}</p>
+                            <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {addOn.bookedBy}
+                          </TableCell>
+                          <TableCell className="text-right">${addOn.cost}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleShareItinerary} className="self-start">
+                  Share Itinerary
+                </Button>
+                <a
+                  href="/gemini"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted"
+                >
+                  ✨ Gemini noticed great weather for your trip — open Gemini
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">
+                You don&apos;t have an itinerary yet.
+              </p>
+              <Button asChild variant="outline">
+                <Link to="/assistant">Plan with AI Assistant</Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

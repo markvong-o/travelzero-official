@@ -42,7 +42,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4 md:hidden">
@@ -68,7 +68,9 @@ export default function AppLayout() {
           </DropdownMenu>
           <span className="text-sm font-medium text-foreground">TravelZero</span>
         </header>
-        <main className="flex-1 overflow-auto">
+        {/* min-h-0 lets a page opt into its own internal scroll region (the
+            Assistant chat) instead of growing the whole shell. */}
+        <main className="min-h-0 flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>
