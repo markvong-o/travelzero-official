@@ -6,11 +6,14 @@ import { useWebAuthnPrompt, WebAuthnPrompt } from '../components/WebAuthnPrompt'
 import { Button } from '@/components/ui/button';
 import { isAuth0Configured } from '../lib/auth-config';
 
-const METHODS = [
-  { id: 'passkey', icon: '🔐', label: 'Sign in with Passkey' },
-  { id: 'password', icon: '🔑', label: 'Use password instead' },
-  { id: 'email_code', icon: '📧', label: 'Get a login code by email' },
-];
+// Keyed by DestinationCard's `destination.id` (see Browse.jsx) — enough to
+// show contextual copy without importing the full destinations dataset.
+const DESTINATION_COPY = {
+  rome: { name: 'Rome', emoji: '🏛️' },
+  amalfi: { name: 'the Amalfi Coast', emoji: '🏖️' },
+  tuscany: { name: 'Tuscany', emoji: '🍇' },
+  como: { name: 'Lake Como', emoji: '🏔️' },
+};
 
 function methodButtonClass(active) {
   return `flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors ${
@@ -20,8 +23,12 @@ function methodButtonClass(active) {
   }`;
 }
 
-export default function Login() {
-  const { login } = useAuth();
+// Promoted from the old SignupModal.jsx (a shadcn Dialog opened from
+// Browse's "Book This Trip") into a full route. `returnTo` sends the user
+// back to wherever they were, and this page now owns the loyalty-points
+// success toast that Browse.jsx used to fire from its onSuccess callback.
+export default function Signup() {
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { prompt, promptProps } = useWebAuthnPrompt();
@@ -32,14 +39,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const returnTo = searchParams.get('returnTo') || '/dashboard';
-  // Real Auth0 mode redirects to Universal Login and never reads these
-  // form fields, so skip rendering the form entirely and trigger the
-  // redirect immediately instead of showing inputs that do nothing.
+  const destination = DESTINATION_COPY[searchParams.get('destination')];
   const authRedirect = isAuth0Configured();
 
   useEffect(() => {
     if (authRedirect) {
-      login();
+      signup();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authRedirect]);
@@ -47,30 +52,34 @@ export default function Login() {
   if (authRedirect) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Redirecting to sign in…
+        Redirecting to sign up…
       </div>
     );
   }
 
-  const handlePasskeyLogin = async () => {
+  const finishSignup = () => {
+    showToast('Welcome! You earned 10,000 loyalty points! 🎉', 'success');
+    navigate(returnTo);
+  };
+
+  const handlePasskeySignup = async () => {
     if (!email) {
       showToast('Please enter your email', 'warning');
       return;
     }
     setLoading(true);
     try {
-      await prompt('Authenticate with Face ID / Touch ID');
-      await login(email, 'passkey');
-      showToast('Login successful!', 'success');
-      navigate(returnTo);
+      await prompt('Use Face ID / Touch ID / Security Key');
+      await signup(email, 'passkey');
+      finishSignup();
     } catch (error) {
-      showToast(error.error || 'Login failed', 'error');
+      showToast(error.error || 'Signup failed', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePasswordLogin = async (e) => {
+  const handlePasswordSignup = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       showToast('Please fill in all fields', 'warning');
@@ -78,11 +87,10 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await login(email, 'password', password);
-      showToast('Login successful!', 'success');
-      navigate(returnTo);
+      await signup(email, 'password', password);
+      finishSignup();
     } catch (error) {
-      showToast(error.error || 'Login failed', 'error');
+      showToast(error.error || 'Signup failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -90,27 +98,46 @@ export default function Login() {
 
   return (
     <>
-      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid min-h-screen lg:grid-cols-[420px_minmax(0,1fr)]">
+        <div
+          className="hidden flex-col justify-center gap-4 p-10 text-white lg:flex"
+          style={{ background: 'var(--gradient-brand)' }}
+        >
+          <h2 className="text-xl font-semibold">
+            {destination ? `Ready to explore ${destination.name}? ${destination.emoji}` : 'Join TravelZero'}
+          </h2>
+          <p className="text-sm text-white/90">
+            Sign up for a free account and get 10,000 loyalty points you can use towards your next
+            trip.
+          </p>
+        </div>
+
         <div className="flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-sm">
             <div className="mb-8 text-center">
-              <h1 className="text-2xl font-semibold text-foreground">Welcome back</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Sign in to TravelZero</p>
+              <h1 className="text-2xl font-semibold text-foreground">Create your account</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Takes less than a minute</p>
             </div>
 
             <div className="mb-6 flex flex-col gap-2">
-              {METHODS.map(({ id, icon, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setMethod(id)}
-                  disabled={loading}
-                  className={methodButtonClass(method === id)}
-                >
-                  <span>{icon}</span>
-                  <span>{label}</span>
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setMethod('passkey')}
+                disabled={loading}
+                className={methodButtonClass(method === 'passkey')}
+              >
+                <span>🔐</span>
+                <span>Sign up with Passkey</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMethod('password')}
+                disabled={loading}
+                className={methodButtonClass(method === 'password')}
+              >
+                <span>🔑</span>
+                <span>Sign up with Password</span>
+              </button>
             </div>
 
             {method === 'passkey' && (
@@ -123,14 +150,14 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                 />
-                <Button onClick={handlePasskeyLogin} disabled={loading} size="lg" className="w-full">
-                  {loading ? 'Authenticating…' : 'Sign in with Passkey'}
+                <Button onClick={handlePasskeySignup} disabled={loading} size="lg" className="w-full">
+                  {loading ? 'Setting up passkey…' : 'Continue with Passkey'}
                 </Button>
               </div>
             )}
 
             {method === 'password' && (
-              <form onSubmit={handlePasswordLogin} className="flex flex-col gap-3">
+              <form onSubmit={handlePasswordSignup} className="flex flex-col gap-3">
                 <input
                   type="email"
                   className="w-full"
@@ -143,64 +170,30 @@ export default function Login() {
                 <input
                   type="password"
                   className="w-full"
-                  placeholder="Password"
+                  placeholder="Password (min 8 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
                   required
                 />
                 <Button type="submit" disabled={loading} size="lg" className="w-full">
-                  {loading ? 'Signing in…' : 'Sign In'}
+                  {loading ? 'Creating account…' : 'Create account'}
                 </Button>
               </form>
             )}
 
-            {method === 'email_code' && (
-              <div className="flex flex-col gap-3">
-                <input
-                  type="email"
-                  className="w-full"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                />
-                <Button
-                  onClick={() => showToast('Check your email for a login code', 'info')}
-                  disabled={loading}
-                  size="lg"
-                  className="w-full"
-                >
-                  Send Login Code
-                </Button>
-              </div>
-            )}
-
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
-              <Link to={`/signup?returnTo=${encodeURIComponent(returnTo)}`} className="font-medium text-primary hover:underline">
-                Sign up
+              Have an account?{' '}
+              <Link to={`/login?returnTo=${encodeURIComponent(returnTo)}`} className="font-medium text-primary hover:underline">
+                Sign in
               </Link>
             </p>
             <p className="mt-2 text-center">
-              <Link to="/" className="text-sm text-muted-foreground hover:underline">
-                Go back home
+              <Link to={returnTo} className="text-sm text-muted-foreground hover:underline">
+                Continue browsing as guest
               </Link>
             </p>
           </div>
-        </div>
-
-        <div
-          className="hidden flex-col justify-center gap-4 p-10 text-white lg:flex"
-          style={{ background: 'var(--gradient-brand)' }}
-        >
-          <h2 className="text-xl font-semibold">Why choose TravelZero?</h2>
-          <ul className="flex flex-col gap-3 text-sm">
-            <li>🔐 Secure authentication with passkeys</li>
-            <li>⭐ Earn loyalty points on every booking</li>
-            <li>✈️ Personalized travel recommendations</li>
-            <li>💳 Save your favorite destinations</li>
-          </ul>
         </div>
       </div>
       <WebAuthnPrompt {...promptProps} />

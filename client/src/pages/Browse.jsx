@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { DestinationCard } from '../components/DestinationCard';
-import { Modal } from '../components/Modal';
-import SignupModal from './SignupModal';
 import './Browse.css';
 
 const DESTINATIONS = [
@@ -50,26 +49,16 @@ const DESTINATIONS = [
 ];
 
 export default function Browse() {
-  const { isAnonymous, sessionId, signup } = useAuth();
+  const { isAnonymous, sessionId } = useAuth();
   const { showToast } = useToast();
-  const [showSignup, setShowSignup] = useState(false);
-  const [selectedDestination, setSelectedDestination] = useState(null);
+  const navigate = useNavigate();
 
   const handleBook = (destination) => {
     if (isAnonymous) {
-      setSelectedDestination(destination);
-      setShowSignup(true);
+      navigate(`/signup?destination=${destination.id}&returnTo=${encodeURIComponent('/')}`);
     } else {
       showToast('Booking feature coming soon!', 'info');
     }
-  };
-
-  const handleSignupSuccess = async () => {
-    setShowSignup(false);
-    showToast(
-      'Welcome! You earned 10,000 loyalty points! 🎉',
-      'success'
-    );
   };
 
   return (
@@ -105,14 +94,6 @@ export default function Browse() {
           </div>
         </section>
       </main>
-
-      <Modal isOpen={showSignup} onClose={() => setShowSignup(false)} size="md">
-        <SignupModal
-          destination={selectedDestination}
-          onSuccess={handleSignupSuccess}
-          onCancel={() => setShowSignup(false)}
-        />
-      </Modal>
     </div>
   );
 }

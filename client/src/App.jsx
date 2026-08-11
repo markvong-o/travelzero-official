@@ -9,6 +9,7 @@ import AppLayout from './layouts/AppLayout';
 import FocusedLayout from './layouts/FocusedLayout';
 import Browse from './pages/Browse';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Assistant from './pages/Assistant';
 import ExperimentCenter from './pages/ExperimentCenter';
@@ -32,6 +33,7 @@ function AppRoutes() {
 
             <Route element={<FocusedLayout />}>
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/security-interstitial" element={<SecurityInterstitial />} />
             </Route>
 
