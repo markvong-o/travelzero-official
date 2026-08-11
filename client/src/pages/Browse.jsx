@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { DestinationCard } from '../components/DestinationCard';
-import './Browse.css';
 
 const DESTINATIONS = [
   {
@@ -62,37 +61,36 @@ export default function Browse() {
   };
 
   return (
-    <div className="browse-page">
+    <div className="flex-1">
       {isAnonymous && (
-        <div className="guest-banner">
+        <div className="flex flex-col items-center gap-4 border-b border-border bg-card px-6 py-4 text-sm text-slate-700 md:flex-row md:justify-between md:gap-0">
           <span>👤 Browsing as Guest</span>
-          <span className="session-id">Session: {sessionId?.substring(0, 8)}</span>
+          <span className="rounded-full border border-border bg-muted px-3 py-1 font-mono font-medium">
+            Session: {sessionId?.substring(0, 8)}
+          </span>
         </div>
       )}
 
-      <div className="hero-section">
-        <div className="hero-content">
-          <h1>Discover Your Next Italian Adventure</h1>
-          <p>
+      <div className="relative flex min-h-[360px] items-end justify-center bg-[url('/images/hero-italy.jpg')] bg-cover bg-[center_65%] bg-no-repeat px-6 py-16 text-white md:min-h-[440px]">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/75 to-transparent to-60%" />
+        <div className="relative z-10 max-w-2xl text-center">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            Discover Your Next Italian Adventure
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-white/95">
             Explore Italy's most enchanting destinations. Sign up for a free account and unlock
             10,000 loyalty points!
           </p>
         </div>
       </div>
 
-      <main className="container">
-        <section className="destinations-section">
-          <h2>Featured Destinations</h2>
-          <div className="destinations-grid">
-            {DESTINATIONS.map((dest) => (
-              <DestinationCard
-                key={dest.id}
-                destination={dest}
-                onBook={handleBook}
-              />
-            ))}
-          </div>
-        </section>
+      <main className="mx-auto w-full max-w-7xl px-6 py-16">
+        <h2 className="mb-8 text-2xl font-semibold text-foreground">Featured Destinations</h2>
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {DESTINATIONS.map((dest) => (
+            <DestinationCard key={dest.id} destination={dest} onBook={handleBook} />
+          ))}
+        </div>
       </main>
     </div>
   );

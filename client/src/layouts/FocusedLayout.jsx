@@ -5,7 +5,7 @@ import { Outlet } from 'react-router-dom';
 // step-up interstitial). No nav/sidebar — each page owns its own centering.
 export default function FocusedLayout() {
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-background">
       <Outlet />
     </div>
   );

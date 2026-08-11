@@ -34,7 +34,7 @@ export function WebAuthnPrompt({ message, icon = '👆' }) {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30">
       <div className="mx-4 max-w-xs rounded-xl bg-white p-10 text-center shadow-2xl">
         <div className="mb-4 text-5xl">{icon}</div>
-        <p className="mb-6 text-lg font-semibold text-neutral-900">{message}</p>
+        <p className="mb-6 text-lg font-semibold text-foreground">{message}</p>
         <div className="inline-block size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     </div>

@@ -265,6 +265,25 @@ a:hover {
   box-shadow: var(--shadow-lg);
 }
 
+/* Per-destination gradients — the fallback painted behind each destination
+   photo. Defined once here because both DestinationCard and Dashboard use
+   them, keyed by `destination.color`. */
+.bg-rome {
+  background: linear-gradient(135deg, #4F3CF0, #7A5CFA);
+}
+
+.bg-amalfi {
+  background: linear-gradient(135deg, #0EA5E9, #00C2A8);
+}
+
+.bg-tuscany {
+  background: linear-gradient(135deg, #00C2A8, #10B981);
+}
+
+.bg-como {
+  background: linear-gradient(135deg, #3B29C4, #0EA5E9);
+}
+
 /* Flat surface card — opaque, hairline border, barely-there shadow. No blur
    anywhere in this design; separation comes from whitespace + the border. */
 .surface-card {
