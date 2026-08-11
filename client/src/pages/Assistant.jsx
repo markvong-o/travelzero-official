@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ScopeChip } from '../components/ScopeChip';
 import { Button } from '@/components/ui/button';
 import api from '../api.js';
 import './Assistant.css';
 
+// Anonymous users never reach this page — AppLayout redirects to /login
+// before this component mounts.
 export default function Assistant() {
-  const { isAnonymous } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [messages, setMessages] = useState([]);
@@ -18,13 +18,6 @@ export default function Assistant() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receipt, setReceipt] = useState(null);
   const messagesEndRef = useRef(null);
-
-  useEffect(() => {
-    if (isAnonymous) {
-      navigate('/');
-      return;
-    }
-  }, [isAnonymous, navigate]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -1,24 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Badge } from '../components/Badge';
 import api from '../api.js';
 import './ExperimentCenter.css';
 
+// Anonymous users never reach this page — AppLayout redirects to /login
+// before this component mounts.
 export default function ExperimentCenter() {
-  const { isAnonymous } = useAuth();
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAnonymous) {
-      navigate('/');
-      return;
-    }
-
     const loadStats = async () => {
       try {
         const data = await api.getPasskeyTestStats();
@@ -31,7 +24,7 @@ export default function ExperimentCenter() {
     };
 
     loadStats();
-  }, [isAnonymous, navigate, showToast]);
+  }, [showToast]);
 
   if (loading) {
     return (

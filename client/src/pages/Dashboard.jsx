@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { LoyaltyMeter } from '../components/LoyaltyMeter';
 import api from '../api.js';
 import './Dashboard.css';
 
+// Anonymous users never reach this page — AppLayout redirects to /login
+// before this component mounts.
 export default function Dashboard() {
-  const { user, isAnonymous } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [profile, setProfile] = useState(null);
@@ -15,11 +15,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAnonymous) {
-      navigate('/');
-      return;
-    }
-
     const loadProfile = async () => {
       try {
         const data = await api.getMe();
@@ -33,7 +28,7 @@ export default function Dashboard() {
     };
 
     loadProfile();
-  }, [isAnonymous, navigate, showToast]);
+  }, [showToast]);
 
   if (loading) {
     return (

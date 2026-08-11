@@ -5,9 +5,11 @@ import { Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import { NavBar } from './components/NavBar';
 import { ToastContainer } from './components/Toast';
 import { PhoneFrame } from './components/PhoneFrame';
+import PublicLayout from './layouts/PublicLayout';
+import AppLayout from './layouts/AppLayout';
+import FocusedLayout from './layouts/FocusedLayout';
 import Browse from './pages/Browse';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -31,14 +33,22 @@ function AppRoutes() {
     <AuthProvider>
       <ToastProvider>
         <div className="app">
-          {!isExternalAppRoute && <NavBar />}
           <Routes>
-            <Route path="/" element={<Browse />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/assistant" element={<Assistant />} />
-            <Route path="/admin/experiments" element={<ExperimentCenter />} />
-            <Route path="/security-interstitial" element={<SecurityInterstitial />} />
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<Browse />} />
+            </Route>
+
+            <Route element={<FocusedLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/security-interstitial" element={<SecurityInterstitial />} />
+            </Route>
+
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/assistant" element={<Assistant />} />
+              <Route path="/admin/experiments" element={<ExperimentCenter />} />
+            </Route>
+
             <Route path="/gemini" element={<Gemini />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
