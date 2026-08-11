@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -64,8 +65,11 @@ export default function Browse() {
     <div className="flex-1">
       {isAnonymous && (
         <div className="flex flex-col items-center gap-4 border-b border-border bg-card px-6 py-4 text-sm text-slate-700 md:flex-row md:justify-between md:gap-0">
-          <span>👤 Browsing as Guest</span>
-          <span className="rounded-full border border-border bg-muted px-3 py-1 font-mono font-medium">
+          <span className="flex items-center gap-1.5">
+            <UserRound className="size-4 shrink-0" />
+            Browsing as Guest
+          </span>
+          <span className="rounded-full bg-accent/10 px-3 py-1 font-mono font-medium tabular-nums text-accent ring-1 ring-accent/20">
             Session: {sessionId?.substring(0, 8)}
           </span>
         </div>

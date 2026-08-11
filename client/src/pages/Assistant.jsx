@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Check, Plane } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { ScopeChip } from '../components/ScopeChip';
 import { Button } from '@/components/ui/button';
@@ -207,13 +208,13 @@ export default function Assistant() {
               </div>
 
               {showReceipt && receipt && (
-                <div className="flex flex-col gap-2 rounded-lg border border-accent bg-accent/8 p-4">
+                <div className="flex flex-col gap-3 rounded-lg border border-l-4 border-accent/30 border-l-accent bg-accent/5 p-4 shadow-md">
                   <img
                     src="/images/sunset-cruise.jpg"
                     alt="Sunset Cruise - Amalfi Coast"
                     className="h-32 w-full rounded-md object-cover"
                   />
-                  <h4 className="text-sm font-semibold text-foreground">
+                  <h4 className="text-base font-semibold text-foreground">
                     Agent Booking Receipt
                   </h4>
                   {[
@@ -232,17 +233,24 @@ export default function Assistant() {
                     ['MCP Tool', receipt.mcp.toolInvoked, true],
                     ['MCP Resource', receipt.mcp.resource, true],
                   ].map(([label, value, mono]) => (
-                    <div key={label} className="flex flex-col gap-0.5 text-xs">
-                      <span className="text-muted-foreground">{label}</span>
+                    <div key={label} className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {label}
+                      </span>
                       <span
-                        className={`break-all text-foreground ${mono ? 'font-mono' : 'font-medium'}`}
+                        className={
+                          mono
+                            ? 'break-all font-mono text-[13px] tabular-nums text-foreground'
+                            : 'break-all text-sm font-medium text-foreground'
+                        }
                       >
                         {value}
                       </span>
                     </div>
                   ))}
-                  <p className="mt-1 text-xs font-medium text-accent-foreground">
-                    ✓ {receipt.message}
+                  <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-accent">
+                    <Check className="size-4 shrink-0" />
+                    {receipt.message}
                   </p>
                 </div>
               )}

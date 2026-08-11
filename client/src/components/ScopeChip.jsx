@@ -6,7 +6,9 @@ export function ScopeChip({ label, scopes, variant = 'default' }) {
   return (
     <div
       className={`inline-flex flex-col gap-2 rounded-lg border p-4 ${
-        highlight ? 'border-accent bg-accent/8' : 'border-border bg-muted'
+        highlight
+          ? 'border-l-4 border-accent/30 border-l-accent bg-accent/5'
+          : 'border-border bg-muted'
       }`}
     >
       <div className="text-sm font-semibold text-primary">{label}</div>

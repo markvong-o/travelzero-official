@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -33,8 +34,10 @@ export default function SecurityInterstitial() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-lg">
-        <div className="mb-4 text-center text-4xl">⚠️</div>
+      <div className="w-full max-w-md rounded-xl bg-card p-8 shadow-xl ring-1 ring-foreground/10">
+        <div className="mb-4 flex justify-center">
+          <TriangleAlert className="size-10 text-warning" />
+        </div>
 
         <h1 className="text-center text-xl font-semibold text-foreground">
           Account Security Alert
