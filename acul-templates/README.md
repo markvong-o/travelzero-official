@@ -4,22 +4,10 @@ Custom Universal Login screens for the `exp_device_segmentation` experiment. Eac
 
 | Variant | `login-id` | `signup-id` |
 |---|---|---|
-| **Control** (password-first) | Email input → Continue | Email input → Continue |
+| **Control** (password-first) | Email input → Continue | Email + password form |
 | **Treatment** (passkey-first) | Email input → Continue with passkey (primary), password toggle | Passkey CTA (primary), password fallback |
 
 Both screens check `client.client_id` before rendering. Non-TravelZero applications on the same tenant receive a minimal standard form so the ACUL configuration doesn't affect them.
-
-`login-id`/`signup-id` only ever collect the identifier — Auth0's Identifier-First
-architecture routes password entry to a separate screen (`login-password`,
-`signup-password`) with no supported way to merge the two (confirmed by Auth0
-staff on their community forum: https://community.auth0.com/t/link-to-custom-prompt-acul-screen/184126).
-`login-password.js` and `signup-password.js` build that password step as its own
-branded ACUL screen instead of falling back to classic Universal Login. They
-don't branch on the experiment — by the time a user reaches password entry
-they've already committed to that path, so both always render in the same
-"password mode" look (blue accent, carousel on the left). The identifier
-collected on the previous screen carries forward automatically via
-`screen.screen.data.username` / `screen.screen.data.email`.
 
 ---
 
@@ -102,48 +90,6 @@ curl -X PATCH "https://YOUR_DOMAIN/api/v2/prompts/signup-id/screen/signup-id/ren
 
 The `"context_configuration": ["experiment"]` opt-in is required for `window.universal_login_context.experiment` to be populated inside the screen.
 
-**Login password screen:**
-
-No `context_configuration` needed — this screen doesn't branch on the experiment.
-
-```bash
-curl -X PATCH "https://YOUR_DOMAIN/api/v2/prompts/login-password/screen/login-password/rendering" \
-  -H "Authorization: Bearer YOUR_MGMT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "rendering_mode": "advanced",
-    "head_tags": [
-      {
-        "tag": "script",
-        "attributes": {
-          "src": "YOUR_PAGES_URL/login-password.js",
-          "type": "module"
-        }
-      }
-    ]
-  }'
-```
-
-**Signup password screen:**
-
-```bash
-curl -X PATCH "https://YOUR_DOMAIN/api/v2/prompts/signup-password/screen/signup-password/rendering" \
-  -H "Authorization: Bearer YOUR_MGMT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "rendering_mode": "advanced",
-    "head_tags": [
-      {
-        "tag": "script",
-        "attributes": {
-          "src": "YOUR_PAGES_URL/signup-password.js",
-          "type": "module"
-        }
-      }
-    ]
-  }'
-```
-
 ### 2. Reset ACUL (revert to standard ULP)
 
 ```bash
@@ -195,9 +141,5 @@ This triggers the treatment variant for your session without affecting other use
 |---|---|---|
 | `login-id` | Login identifier | `screens/login-id.js` |
 | `signup-id` | Signup identifier | `screens/signup-id.js` |
-| `login-password` | Login password | `screens/login-password.js` |
-| `signup-password` | Signup password | `screens/signup-password.js` |
 
-`login-passkey` (the WebAuthn challenge screen) doesn't need an ACUL build —
-`passkeyLogin()` on the `login-id` screen triggers the WebAuthn ceremony
-directly via `navigator.credentials.get()` without ever navigating there.
+Downstream screens (`login-password`, `login-passkey`, `signup-password`) continue to use Auth0's standard ULP unless additional ACUL screens are added here.

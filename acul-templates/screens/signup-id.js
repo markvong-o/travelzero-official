@@ -191,13 +191,10 @@ function renderBranded(theme, ctx) {
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
 function wireHandlers(screen) {
-  // TravelZero passkey-first: primary passkey form. SignupOptions requires the
-  // collected identifier under its typed key (email/username/phone) rather than
-  // a generic "username" like login-id — sending { username } here is what
-  // produced "missing parameter(s): email".
+  // TravelZero passkey-first: primary passkey form
   bind('passkey-signup-form', 'submit', async (e) => {
     e.preventDefault();
-    await submit(screen, { email: val('username-passkey') });
+    await submit(screen, { username: val('username-passkey') });
   });
 
   // TravelZero passkey-first: password fallback toggle
@@ -217,14 +214,14 @@ function wireHandlers(screen) {
   if (passwordSignupForm) {
     passwordSignupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = val('username-main') || val('username-password');
-      await submit(screen, { email });
+      const username = val('username-main') || val('username-password');
+      await submit(screen, { username });
     });
   }
 
   // TravelZero password-first: passkey alternative
   bind('passkey-option', 'click', async () => {
-    await submit(screen, { email: val('username-main') ?? '' });
+    await submit(screen, { username: val('username-main') ?? '' });
   });
 }
 
