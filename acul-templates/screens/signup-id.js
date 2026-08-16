@@ -202,7 +202,13 @@ function identifierParams(screen, value) {
   const optional = screen?.transaction?.optionalIdentifiers ?? [];
   const types = [...new Set([...required, ...optional])].filter((t) => t !== 'phone');
   if (types.length === 0) return { email: value };
-  return Object.fromEntries(types.map((t) => [t, value]));
+  // If username is required, extract the part before @ (truncate domain)
+  return Object.fromEntries(types.map((t) => {
+    if (t === 'username' && value.includes('@')) {
+      return [t, value.split('@')[0]];
+    }
+    return [t, value];
+  }));
 }
 
 function bind(id, event, handler) {

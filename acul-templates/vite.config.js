@@ -10,6 +10,7 @@ export default defineConfig({
         'login-password':            resolve(__dirname, 'screens/login-password.js'),
         'signup-password':           resolve(__dirname, 'screens/signup-password.js'),
         'email-identifier-challenge': resolve(__dirname, 'screens/email-identifier-challenge.js'),
+        'email-otp-challenge':       resolve(__dirname, 'screens/email-otp-challenge.js'),
         'passkey-enrollment':        resolve(__dirname, 'screens/passkey-enrollment.js'),
       },
       output: {

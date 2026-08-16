@@ -27,7 +27,7 @@ const SLIDES = [
   { src: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1920&q=80', label: 'Lake Como', caption: 'Alpine elegance on Europe\'s deepest lake' },
 ];
 
-let screen, ctx, clientId, isTravelZero, experiment, isPasskeyFirst, appTheme;
+let screen, ctx, clientId, isTravelZero, experiment, isPasswordless, appTheme;
 
 try {
   screen = new LoginId();
@@ -35,7 +35,7 @@ try {
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
   experiment = ctx.experiment;
-  isPasskeyFirst = isTravelZero && experiment ? !experiment.is_control : false;
+  isPasswordless = isTravelZero && experiment ? !experiment.is_control : false;
   appTheme = getTheme(clientId);
 } catch (err) {
   console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
@@ -45,7 +45,7 @@ injectStyles(isTravelZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
-  ? renderTravelZero(isPasskeyFirst, ctx)
+  ? renderTravelZero(isPasswordless, ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
 wireHandlers(isPasswordless, screen);
