@@ -216,9 +216,13 @@ function val(id) {
 async function submit(screen, params) {
   setLoading(true);
   try {
+    console.log('[SignupId] Calling screen.signup() with params:', params);
     await screen.signup(params);
+    console.log('[SignupId] signup() completed, SDK should redirect now');
+    // The SDK handles the redirect/page reload — we don't reset loading
   } catch (err) {
-    showError(err.message ?? 'Sign up failed. Please try again.');
+    console.error('[SignupId] signup() failed:', err);
+    showError(err.message ?? err?.error ?? 'Sign up failed. Please try again.');
     setLoading(false);
   }
 }

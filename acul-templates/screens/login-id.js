@@ -48,14 +48,14 @@ root.innerHTML = isTravelZero
   ? renderTravelZero(isPasskeyFirst, ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
-wireHandlers(screen);
+wireHandlers(isPasswordless, screen);
 if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
 
-function renderTravelZero(passkeyFirst, ctx) {
+function renderTravelZero(passwordless, ctx) {
   const signupUrl = ctx.screen?.links?.signup ?? '#';
-  const variantClass = passkeyFirst ? 'tz-layout--passkey' : 'tz-layout--password';
+  const variantClass = passwordless ? '' : 'tz-layout--password';
   return `
     <div class="tz-layout ${variantClass}">
       <div class="tz-panel">
@@ -63,9 +63,9 @@ function renderTravelZero(passkeyFirst, ctx) {
           <div class="tz-brand">
             <img src="${TZ_LOGO}" class="tz-logo" alt="" />
             <span class="tz-brand-name">TravelZero</span>
-            ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passwordless' : 'Password'}</span>` : ''}
+            ${experiment ? `<span class="tz-exp-badge">${passwordless ? 'Passwordless' : 'Password'}</span>` : ''}
           </div>
-          ${passkeyFirst ? renderPasskeyFirst(ctx) : renderPasswordFirst()}
+          ${passwordless ? renderPasswordless(ctx) : renderPassword()}
           <p class="tz-alt">Don't have an account? <a href="${signupUrl}">Sign up</a></p>
         </div>
       </div>
@@ -98,28 +98,26 @@ function renderCarousel() {
   `;
 }
 
-function renderPasskeyFirst() {
+function renderPasswordless(ctx) {
   return `
     <div class="tz-head">
-      <h1>Sign in with passkey</h1>
-      <p>Use Face ID or Touch ID — no password needed</p>
+      <h1>Sign in to your account</h1>
+      <p>Verify your email — no password needed</p>
     </div>
-    <form id="passkey-form" class="tz-form" novalidate>
-      <input type="email" name="username" id="username-passkey" placeholder="your@email.com" autocomplete="username webauthn" required />
+    <form id="email-form" class="tz-form" novalidate>
+      <input type="email" name="username" id="username-email" placeholder="your@email.com" autocomplete="email" required />
       <button type="submit" class="tz-btn-primary">
-        ${iconKey()} Continue with passkey
+        Sign in with email
       </button>
     </form>
     <div class="tz-divider"><span>or</span></div>
-    <button type="button" class="tz-btn-ghost" id="password-toggle">Use password instead →</button>
-    <form id="password-fallback-form" class="tz-form tz-hidden" novalidate>
-      <input type="email" name="username" id="username-password" placeholder="your@email.com" autocomplete="email" required />
-      <button type="submit" class="tz-btn-secondary">Continue with email</button>
-    </form>
+    <button type="button" class="tz-btn-ghost" id="passkey-alternative">
+      ${iconKey()} Use your passkey instead
+    </button>
   `;
 }
 
-function renderPasswordFirst() {
+function renderPassword() {
   // Identifier-only, by design: Auth0's Identifier-First architecture always
   // routes password entry to a separate screen (login-password), which has no
   // supported way to merge into this one — Auth0 staff have confirmed this on
@@ -176,29 +174,17 @@ function renderBranded(theme, ctx) {
 
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
-function wireHandlers(screen) {
-  // TravelZero passkey-first: primary form — triggers the WebAuthn ceremony
-  // directly on this screen via passkeyLogin(). Using the generic login()
-  // here would just hand Auth0 the identifier and let it route to whatever
-  // screen comes next (login-password/login-passkey), which falls back to
-  // the classic Universal Login template since only login-id/signup-id are
-  // built as ACUL screens.
-  bind('passkey-form', 'submit', async (e) => {
-    e.preventDefault();
-    await submitPasskey(screen, { username: val('username-passkey') });
-  });
-
-  // TravelZero passkey-first: password fallback toggle
-  const passwordToggle = document.getElementById('password-toggle');
-  const passwordFallbackForm = document.getElementById('password-fallback-form');
-  if (passwordToggle && passwordFallbackForm) {
-    passwordToggle.addEventListener('click', () => {
-      const isHidden = passwordFallbackForm.classList.toggle('tz-hidden');
-      passwordToggle.textContent = isHidden ? 'Use password instead →' : '← Back to passkey';
-    });
-    bind('password-fallback-form', 'submit', async (e) => {
+function wireHandlers(passwordless, screen) {
+  if (passwordless) {
+    // TravelZero passwordless: primary email form for OTP verification
+    bind('email-form', 'submit', async (e) => {
       e.preventDefault();
-      await submit(screen, { username: val('username-password') });
+      await submit(screen, { username: val('username-email') });
+    });
+
+    // TravelZero passwordless: passkey alternative
+    bind('passkey-alternative', 'click', async () => {
+      await submitPasskey(screen, { username: val('username-email') });
     });
   }
 
