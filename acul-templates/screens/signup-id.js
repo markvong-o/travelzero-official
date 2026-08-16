@@ -54,8 +54,9 @@ if (isTravelZero) initCarousel();
 
 function renderTravelZero(passkeyFirst, ctx) {
   const loginUrl = ctx.screen?.links?.login ?? '#';
+  const variantClass = passkeyFirst ? 'tz-layout--passkey' : 'tz-layout--password';
   return `
-    <div class="tz-layout">
+    <div class="tz-layout ${variantClass}">
       <div class="tz-panel">
         <div class="tz-card">
           <div class="tz-brand">
@@ -308,7 +309,25 @@ function injectStyles(isTravelZero, theme) {
        TravelZero — experiment variants
     ════════════════════════════════════════════════ */
 
-    .tz-layout { display: flex; min-height: 100vh; align-items: stretch; }
+    .tz-layout {
+      display: flex; min-height: 100vh; align-items: stretch;
+      /* Passkey-first palette (default) — warm, biometric-forward */
+      --tz-accent-1: #FF9F43;
+      --tz-accent-2: #FF6B6B;
+      --tz-accent-solid: #E8590C;
+      --tz-accent-hover: #C2410C;
+      --tz-accent-tint: 255, 159, 67;
+    }
+    /* Password-first palette — cooler, credential-forward. Carousel moves to
+       the left so the two variants read as visually distinct at a glance. */
+    .tz-layout--password {
+      flex-direction: row-reverse;
+      --tz-accent-1: #4F86F7;
+      --tz-accent-2: #6C5CE7;
+      --tz-accent-solid: #3B5FE0;
+      --tz-accent-hover: #2F4EC7;
+      --tz-accent-tint: 79, 134, 247;
+    }
     .tz-panel {
       flex: 0 0 40%; min-width: 380px; min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
@@ -316,15 +335,20 @@ function injectStyles(isTravelZero, theme) {
       background: rgba(255,255,255,0.75);
       backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
       border-right: 1px solid rgba(255,255,255,0.45);
-      box-shadow: 4px 0 40px -8px rgba(255,159,67,0.12);
+      box-shadow: 4px 0 40px -8px rgba(var(--tz-accent-tint), 0.12);
+    }
+    .tz-layout--password .tz-panel {
+      border-right: none;
+      border-left: 1px solid rgba(255,255,255,0.45);
+      box-shadow: -4px 0 40px -8px rgba(var(--tz-accent-tint), 0.12);
     }
     .tz-card { width: 100%; max-width: 360px; }
     .tz-brand { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2.25rem; }
     .tz-logo { width: 28px; height: 28px; object-fit: contain; }
     .tz-brand-name { font-size: 1rem; font-weight: 700; color: #1A1A2E; letter-spacing: -0.02em; }
     .tz-exp-badge {
-      margin-left: auto; font-size: 0.6875rem; font-weight: 600; color: #E8590C;
-      background: rgba(255,159,67,0.12); border: 1px solid rgba(255,159,67,0.2);
+      margin-left: auto; font-size: 0.6875rem; font-weight: 600; color: var(--tz-accent-solid);
+      background: rgba(var(--tz-accent-tint), 0.12); border: 1px solid rgba(var(--tz-accent-tint), 0.2);
       border-radius: 999px; padding: 0.15rem 0.6rem;
     }
 
@@ -367,16 +391,16 @@ function injectStyles(isTravelZero, theme) {
     .tz-head p { font-size: 0.9rem; color: #6B7280; line-height: 1.5; }
     .tz-form { display: flex; flex-direction: column; gap: 0.625rem; }
     .tz-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.125rem 0; color: #9CA3AF; font-size: 0.8125rem; }
-    .tz-divider::before, .tz-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,159,67,0.12); }
+    .tz-divider::before, .tz-divider::after { content: ''; flex: 1; height: 1px; background: rgba(var(--tz-accent-tint), 0.12); }
     .tz-alt { margin-top: 1.75rem; font-size: 0.875rem; color: #6B7280; text-align: center; }
-    .tz-alt a { color: #E8590C; font-weight: 600; text-decoration: none; }
-    .tz-alt a:hover { color: #C2410C; }
+    .tz-alt a { color: var(--tz-accent-solid); font-weight: 600; text-decoration: none; }
+    .tz-alt a:hover { color: var(--tz-accent-hover); }
     .tz-btn-primary {
       width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       padding: 0.9rem 1.5rem; font-size: 0.9375rem; font-weight: 700; font-family: inherit;
-      color: #fff; background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%);
+      color: #fff; background: linear-gradient(135deg, var(--tz-accent-1) 0%, var(--tz-accent-2) 100%);
       border: none; border-radius: 14px; cursor: pointer;
-      box-shadow: 0 0 48px -8px rgba(255,159,67,0.35);
+      box-shadow: 0 0 48px -8px rgba(var(--tz-accent-tint), 0.35);
       transition: transform 0.2s, box-shadow 0.2s;
     }
     .tz-btn-primary:hover:not(:disabled) { transform: scale(1.02); }
@@ -387,13 +411,13 @@ function injectStyles(isTravelZero, theme) {
       border: 1.5px solid rgba(255,255,255,0.45); border-radius: 12px; cursor: pointer;
       transition: background 0.2s, border-color 0.2s;
     }
-    .tz-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.7); border-color: rgba(255,159,67,0.25); }
+    .tz-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.7); border-color: rgba(var(--tz-accent-tint), 0.25); }
     .tz-btn-ghost {
       background: none; border: none; font-size: 0.875rem; font-weight: 600; font-family: inherit;
-      color: #E8590C; cursor: pointer; padding: 0.25rem 0;
+      color: var(--tz-accent-solid); cursor: pointer; padding: 0.25rem 0;
       display: inline-flex; align-items: center; gap: 0.375rem;
     }
-    .tz-btn-ghost:hover { color: #C2410C; }
+    .tz-btn-ghost:hover { color: var(--tz-accent-hover); }
 
     /* ════════════════════════════════════════════════
        Branded apps — per-app theme via CSS variables
@@ -458,7 +482,7 @@ function injectStyles(isTravelZero, theme) {
       font-size: 0.9375rem;
       font-family: inherit;
       background: ${isTravelZero ? 'rgba(255,247,237,0.6)' : 'var(--app-input-bg)'};
-      border: 1.5px solid ${isTravelZero ? 'rgba(255,159,67,0.15)' : 'var(--app-input-border)'};
+      border: 1.5px solid ${isTravelZero ? 'rgba(var(--tz-accent-tint), 0.15)' : 'var(--app-input-border)'};
       border-radius: ${isTravelZero ? '12px' : '8px'};
       color: ${isTravelZero ? '#1A1A2E' : 'var(--app-text)'};
       outline: none;
@@ -466,8 +490,8 @@ function injectStyles(isTravelZero, theme) {
     }
     input::placeholder { color: #9CA3AF; }
     input:focus {
-      border-color: ${isTravelZero ? '#FF9F43' : 'var(--app-input-focus)'};
-      box-shadow: 0 0 0 3px ${isTravelZero ? 'rgba(255,159,67,0.15)' : 'color-mix(in srgb, var(--app-input-focus) 20%, transparent)'};
+      border-color: ${isTravelZero ? 'var(--tz-accent-1)' : 'var(--app-input-focus)'};
+      box-shadow: 0 0 0 3px ${isTravelZero ? 'rgba(var(--tz-accent-tint), 0.15)' : 'color-mix(in srgb, var(--app-input-focus) 20%, transparent)'};
     }
 
     .acul-error {
