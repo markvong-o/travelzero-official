@@ -18,6 +18,14 @@ const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
 const TZ_LOGO = 'https://markvong-o.github.io/openmoji-icons/2708.png';
 
+const SLIDES = [
+  { src: 'https://images.unsplash.com/photo-1534308143481-c55f00be8bd7?w=1920&q=80', label: 'Italy', caption: 'Your next Italian adventure awaits' },
+  { src: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1920&q=80', label: 'Rome', caption: 'Explore the Eternal City' },
+  { src: 'https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=1920&q=80', label: 'Amalfi Coast', caption: 'Cliff-hanging views, Mediterranean bliss' },
+  { src: 'https://images.unsplash.com/photo-1499678329028-101435549a4e?w=1920&q=80', label: 'Tuscany', caption: 'Rolling hills, fine wine, timeless art' },
+  { src: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1920&q=80', label: 'Lake Como', caption: 'Alpine elegance on Europe\'s deepest lake' },
+];
+
 let screen, ctx, clientId, isTravelZero, experiment, isPasskeyFirst, appTheme;
 
 try {
@@ -40,6 +48,7 @@ root.innerHTML = isTravelZero
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
 wireHandlers(screen);
+if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
 
@@ -58,17 +67,7 @@ function renderTravelZero(passkeyFirst, ctx) {
           <p class="tz-alt">Already have an account? <a href="${loginUrl}">Sign in</a></p>
         </div>
       </div>
-      <div class="tz-promo">
-        <div class="tz-promo-content">
-          <h2>Join TravelZero</h2>
-          <p>Create a free account and earn 10,000 loyalty points towards your first trip.</p>
-          <ul class="tz-benefits">
-            <li>${iconShield()} Secure sign-in with passkeys</li>
-            <li>${iconStar()} 10,000 welcome loyalty points</li>
-            <li>${iconPlane()} Personalized travel recommendations</li>
-          </ul>
-        </div>
-      </div>
+      ${renderCarousel()}
     </div>
   `;
 }
@@ -107,6 +106,54 @@ function renderPasswordFirst() {
     <div class="tz-divider"><span>or</span></div>
     <button type="button" class="tz-btn-ghost" id="passkey-option">${iconKey()} Sign up with passkey instead</button>
   `;
+}
+
+// ─── Carousel ────────────────────────────────────────────────────────────────
+
+function renderCarousel() {
+  return `
+    <div class="tz-carousel">
+      ${SLIDES.map((s, i) => `
+        <div class="tz-slide ${i === 0 ? 'tz-slide--active' : ''}"
+             style="background-image: url('${s.src}')"></div>
+      `).join('')}
+      <div class="tz-scrim"></div>
+      <div class="tz-carousel-content">
+        <div class="tz-caption">
+          <p class="tz-caption-label">${SLIDES[0].label}</p>
+          <p class="tz-caption-text">${SLIDES[0].caption}</p>
+        </div>
+        <div class="tz-dots">
+          ${SLIDES.map((_, i) => `
+            <button class="tz-dot ${i === 0 ? 'tz-dot--active' : ''}"
+                    data-index="${i}" aria-label="Slide ${i + 1}"></button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initCarousel() {
+  let active = 0;
+  const slides = Array.from(document.querySelectorAll('.tz-slide'));
+  const dots   = Array.from(document.querySelectorAll('.tz-dot'));
+  const label  = document.querySelector('.tz-caption-label');
+  const text   = document.querySelector('.tz-caption-text');
+  if (!slides.length) return;
+
+  function goTo(index) {
+    slides[active].classList.remove('tz-slide--active');
+    dots[active].classList.remove('tz-dot--active');
+    active = index;
+    slides[active].classList.add('tz-slide--active');
+    dots[active].classList.add('tz-dot--active');
+    if (label) label.textContent = SLIDES[active].label;
+    if (text)  text.textContent  = SLIDES[active].caption;
+  }
+
+  dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+  setInterval(() => goTo((active + 1) % SLIDES.length), 10000);
 }
 
 // ─── Branded renderer (all other apps) ───────────────────────────────────────
@@ -260,15 +307,15 @@ function injectStyles(isTravelZero, theme) {
 
     .tz-layout { display: flex; min-height: 100vh; align-items: stretch; }
     .tz-panel {
-      width: 480px; min-height: 100vh; flex-shrink: 0;
+      flex: 0 0 40%; min-width: 380px; min-height: 100vh;
       display: flex; align-items: center; justify-content: center;
-      padding: 3rem 2.5rem;
+      padding: 3rem 3rem;
       background: rgba(255,255,255,0.75);
       backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
       border-right: 1px solid rgba(255,255,255,0.45);
       box-shadow: 4px 0 40px -8px rgba(255,159,67,0.12);
     }
-    .tz-card { width: 100%; max-width: 340px; }
+    .tz-card { width: 100%; max-width: 360px; }
     .tz-brand { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2.25rem; }
     .tz-logo { width: 28px; height: 28px; object-fit: contain; }
     .tz-brand-name { font-size: 1rem; font-weight: 700; color: #1A1A2E; letter-spacing: -0.02em; }
@@ -277,25 +324,41 @@ function injectStyles(isTravelZero, theme) {
       background: rgba(255,159,67,0.12); border: 1px solid rgba(255,159,67,0.2);
       border-radius: 999px; padding: 0.15rem 0.6rem;
     }
-    .tz-promo {
-      flex: 1; display: flex; align-items: center; justify-content: center; padding: 3rem;
+
+    /* ── Carousel (right 60%) ── */
+    .tz-carousel {
+      flex: 1; position: relative; overflow: hidden; min-height: 100vh;
     }
-    .tz-promo-content { max-width: 380px; }
-    .tz-promo-content h2 {
-      font-size: 2.5rem; font-weight: 800; color: #fff;
-      letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 1rem;
-      text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    .tz-slide {
+      position: absolute; inset: 0; background-size: cover; background-position: center;
+      opacity: 0; transition: opacity 0.6s ease;
     }
-    .tz-promo-content p {
-      font-size: 1.0625rem; color: rgba(255,255,255,0.85);
-      line-height: 1.6; margin-bottom: 1.75rem; text-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    .tz-slide--active { opacity: 1; }
+    .tz-scrim {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(2,6,23,0.88) 0%, rgba(2,6,23,0.35) 45%, transparent 100%);
+      pointer-events: none;
     }
-    .tz-benefits { list-style: none; display: flex; flex-direction: column; gap: 0.875rem; }
-    .tz-benefits li {
-      display: flex; align-items: center; gap: 0.625rem;
-      font-size: 0.9375rem; font-weight: 500;
-      color: rgba(255,255,255,0.9); text-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    .tz-carousel-content {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 3rem; display: flex; flex-direction: column; gap: 1.25rem;
     }
+    .tz-caption-label {
+      font-size: 0.8125rem; font-weight: 600; color: rgba(255,255,255,0.6);
+      letter-spacing: 0.08em; text-transform: uppercase; margin: 0;
+    }
+    .tz-caption-text {
+      font-size: 1.375rem; font-weight: 700; color: #fff;
+      letter-spacing: -0.02em; line-height: 1.3; margin: 0;
+    }
+    .tz-dots { display: flex; gap: 0.5rem; }
+    .tz-dot {
+      width: 0.375rem; height: 0.375rem; border-radius: 999px; border: none;
+      background: rgba(255,255,255,0.35); cursor: pointer; padding: 0;
+      transition: background 0.2s, width 0.3s;
+    }
+    .tz-dot:hover { background: rgba(255,255,255,0.6); }
+    .tz-dot--active { background: #fff; width: 1.25rem; }
     .tz-head { margin-bottom: 1.75rem; }
     .tz-head h1 { font-size: 1.625rem; font-weight: 800; color: #1A1A2E; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 0.375rem; }
     .tz-head p { font-size: 0.9rem; color: #6B7280; line-height: 1.5; }

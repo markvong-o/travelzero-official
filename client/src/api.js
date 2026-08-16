@@ -151,6 +151,10 @@ class APIClient {
       method: 'GET',
     });
   }
+
+  getAuth0Experiments() {
+    return this.request('/experiments/auth0', { method: 'GET' });
+  }
 }
 
 export default new APIClient();

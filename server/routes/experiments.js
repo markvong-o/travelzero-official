@@ -1,5 +1,6 @@
 import express from 'express';
 import store from '../store.js';
+import { isAuth0Configured, getExperiments, getFeatureFlag } from '../lib/auth0-management.js';
 
 const router = express.Router();
 
@@ -74,6 +75,35 @@ router.get('/passkey-test', (req, res) => {
   };
 
   res.json(stats);
+});
+
+/**
+ * GET /api/experiments/auth0
+ * Fetches live experiments + feature flags from Auth0 Experiment Center and
+ * returns them enriched with variation details for the admin UI.
+ */
+router.get('/auth0', async (req, res) => {
+  if (!isAuth0Configured()) {
+    return res.status(503).json({ error: 'Auth0 not configured' });
+  }
+
+  try {
+    const experiments = await getExperiments();
+
+    const enriched = await Promise.all(
+      experiments.map(async (exp) => {
+        let featureFlag = null;
+        if (exp.feature_flag_id) {
+          try { featureFlag = await getFeatureFlag(exp.feature_flag_id); } catch {}
+        }
+        return { ...exp, feature_flag: featureFlag };
+      })
+    );
+
+    res.json(enriched);
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
 });
 
 export default router;

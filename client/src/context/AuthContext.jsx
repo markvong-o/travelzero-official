@@ -119,7 +119,7 @@ function useMockAuth() {
     }));
   };
 
-  return { user, sessionId, isAnonymous, loading, anonFavorites, signup, login, logout, addFavorite, removeFavorite };
+  return { user, sessionId, isAnonymous, loading, anonFavorites, signup, login, loginWithVariant: () => {}, logout, addFavorite, removeFavorite };
 }
 
 // Real Auth0 flow — same context shape as useMockAuth() above, so pages never know
@@ -247,6 +247,16 @@ function useRealAuth0() {
     });
   };
 
+  const loginWithVariant = (variant) => loginWithRedirect({
+    authorizationParams: {
+      prompt: 'login',
+      experiment_id: 'exp_uMP2ccYnKbSXPPNF8q1jsh',
+      variation_id: variant === 'passkey'
+        ? 'var_qK6ZV13YwmWpm8L4ugaKhu'  // treatment: passkey-first
+        : 'var_3hZCybt6ajZWeXZfQkkhHM', // control: password-first
+    },
+  });
+
   const login = async (returnTo = '/dashboard') => {
     const favorites = getAnonFavorites();
     let token = anonSessionToken;
@@ -308,6 +318,7 @@ function useRealAuth0() {
     anonFavorites: isAuthenticated ? [] : localFavorites,
     signup,
     login,
+    loginWithVariant,
     logout,
     addFavorite,
     removeFavorite,

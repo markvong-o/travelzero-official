@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FlaskConical, CheckCircle2, PauseCircle, ArrowRight, Zap, Radio, LayoutTemplate } from 'lucide-react';
+import { FlaskConical, CheckCircle2, PauseCircle, ArrowRight, Zap, Radio, LayoutTemplate, Fingerprint, KeyRound, RefreshCw, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useExperimentContext } from '../context/ExperimentContext';
+import { useAuth } from '../context/AuthContext';
 import { Metric } from '../components/Metric';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ const EXPERIMENTS = [
     significant: false,
     measurementOnly: true,
     auth0Wired: true,
+    aculDemo: true,
     previewPath: '/login',
     control: {
       label: 'OTP fallback cohort',
@@ -100,15 +102,34 @@ function FlowChip({ flow }) {
 
 const isAuth0Mode = isAuth0Configured();
 
+function IdRow({ label, id, onCopy, copied }) {
+  if (!id) return null;
+  return (
+    <div className={s.idRow}>
+      <span className={s.idLabel}>{label}</span>
+      <button className={s.idChip} onClick={() => onCopy(id)} title="Copy">
+        <code>{id}</code>
+        {copied ? <Check size={11} /> : <Copy size={11} />}
+      </button>
+    </div>
+  );
+}
+
 export default function ExperimentCenter() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { setVariant, getVariant } = useExperimentContext();
+  const { loginWithVariant } = useAuth();
 
   const [selected, setSelected] = useState(null);
   const [previewVariant, setPreviewVariant] = useState('control');
   const [liveStats, setLiveStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [auth0Experiments, setAuth0Experiments] = useState([]);
+  const [auth0Loading, setAuth0Loading] = useState(false);
+  const [auth0Error, setAuth0Error] = useState(null);
+  const [expandedExp, setExpandedExp] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     if (isAuth0Mode) { setLoading(false); return; }
@@ -149,6 +170,33 @@ export default function ExperimentCenter() {
       totalN: null,
     };
   };
+
+  const fetchAuth0Experiments = () => {
+    setAuth0Loading(true);
+    setAuth0Error(null);
+    api.getAuth0Experiments()
+      .then(data => setAuth0Experiments(data))
+      .catch(err => setAuth0Error(err.error || err.message || 'Failed to load experiments'))
+      .finally(() => setAuth0Loading(false));
+  };
+
+  useEffect(() => {
+    if (isAuth0Mode) fetchAuth0Experiments();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const copyId = (id) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const statusVariant = (status) => ({
+    active: 'default',
+    draft: 'outline',
+    paused: 'secondary',
+    completed: 'secondary',
+    archived: 'secondary',
+  }[status] ?? 'outline');
 
   const selectedData = selected ? getVariantValues(selected) : null;
 
@@ -338,6 +386,23 @@ export default function ExperimentCenter() {
               </Button>
             </div>
 
+            {/* ── Universal Login demo buttons (ACUL experiments) ── */}
+            {isAuth0Mode && selected.aculDemo && (
+              <div className={s.demoRow}>
+                <p className={s.demoHint}>
+                  Demo in Universal Login — forces a variant at the Auth0 login screen. Requires ACUL screens to be deployed.
+                </p>
+                <div className={s.demoBtns}>
+                  <Button variant="outline" size="sm" onClick={() => loginWithVariant('passkey')}>
+                    <Fingerprint size={14} /> Demo passkey-first
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => loginWithVariant('password')}>
+                    <KeyRound size={14} /> Demo password-first
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* ── Metric bars (for experiments with mock/live data) ── */}
             {(selectedData.control.value || selectedData.treatment.value) && (
               <div className={s.metricBars}>
@@ -368,6 +433,135 @@ export default function ExperimentCenter() {
 
       {!selected && (
         <p className={s.selectHint}>Select an experiment above to view variant details and preview it in the app.</p>
+      )}
+
+      {isAuth0Mode && (
+        <Card className={s.liveCard}>
+          <CardHeader className={s.liveHeader}>
+            <div className={s.liveHeaderLeft}>
+              <Radio size={15} className={s.liveIcon} />
+              <CardTitle className={s.liveTitle}>Live from Auth0 Experiment Center</CardTitle>
+              {!auth0Loading && auth0Experiments.length > 0 && (
+                <Badge variant="outline">{auth0Experiments.length} experiment{auth0Experiments.length !== 1 ? 's' : ''}</Badge>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={fetchAuth0Experiments} disabled={auth0Loading} className={s.refreshBtn}>
+              <RefreshCw size={13} className={auth0Loading ? s.spinning : ''} />
+              {auth0Loading ? 'Loading…' : 'Refresh'}
+            </Button>
+          </CardHeader>
+          <CardContent className={s.liveBody}>
+            {auth0Error && (
+              <p className={s.liveError}>{auth0Error}</p>
+            )}
+            {!auth0Loading && !auth0Error && auth0Experiments.length === 0 && (
+              <p className={s.liveEmpty}>No experiments found on this tenant.</p>
+            )}
+            {auth0Experiments.map(exp => {
+              const isOpen = expandedExp === exp.id;
+              const variations = exp.feature_flag?.variations ?? [];
+              return (
+                <div key={exp.id} className={s.expRow}>
+                  <button
+                    className={s.expRowHeader}
+                    onClick={() => setExpandedExp(isOpen ? null : exp.id)}
+                  >
+                    <span className={s.expChevron}>
+                      {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </span>
+                    <span className={s.expName}>{exp.name}</span>
+                    <Badge variant={statusVariant(exp.status)} className={s.expStatus}>{exp.status}</Badge>
+                    {!exp.is_valid && <Badge variant="outline" className={s.invalidBadge}>invalid</Badge>}
+                    <span className={s.expFlow}>{exp.authentication_flow}</span>
+                  </button>
+
+                  {isOpen && (
+                    <div className={s.expDetail}>
+                      <div className={s.idGrid}>
+                        <IdRow label="Experiment ID" id={exp.id} onCopy={copyId} copied={copiedId === exp.id} />
+                        <IdRow label="Feature flag" id={exp.feature_flag_id} onCopy={copyId} copied={copiedId === exp.feature_flag_id} />
+                        <div className={s.metaRow}>
+                          <span className={s.metaLabel}>Strategy</span>
+                          <span className={s.metaValue}>{exp.allocation_strategy ?? '—'}</span>
+                          <span className={s.metaLabel}>Subject</span>
+                          <span className={s.metaValue}>{exp.assignment_config?.subject ?? '—'}</span>
+                        </div>
+                      </div>
+
+                      <div className={s.allocSection}>
+                        <p className={s.allocTitle}>Allocations</p>
+                        <table className={s.allocTable}>
+                          <thead>
+                            <tr>
+                              <th>Variation ID</th>
+                              <th>Role</th>
+                              <th>Segment</th>
+                              {variations.length > 0 && <th>Name</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {exp.allocations?.map(alloc => {
+                              const variation = variations.find(v => v.id === alloc.variation_id);
+                              return (
+                                <tr key={alloc.variation_id} className={alloc.is_control ? s.controlRow : ''}>
+                                  <td>
+                                    <button className={s.idChip} onClick={() => copyId(alloc.variation_id)} title="Copy">
+                                      <code>{alloc.variation_id}</code>
+                                      {copiedId === alloc.variation_id ? <Check size={11} /> : <Copy size={11} />}
+                                    </button>
+                                  </td>
+                                  <td className={s.roleCell}>
+                                    {alloc.is_control && <Badge variant="secondary">control</Badge>}
+                                    {alloc.is_fallback && <Badge variant="outline">fallback</Badge>}
+                                    {!alloc.is_control && !alloc.is_fallback && <Badge variant="default">treatment</Badge>}
+                                  </td>
+                                  <td>
+                                    {alloc.segment_id
+                                      ? <button className={s.idChip} onClick={() => copyId(alloc.segment_id)} title="Copy segment ID">
+                                          <code>{alloc.segment_id}</code>
+                                          {copiedId === alloc.segment_id ? <Check size={11} /> : <Copy size={11} />}
+                                        </button>
+                                      : <span className={s.fallbackLabel}>fallback (all)</span>}
+                                  </td>
+                                  {variations.length > 0 && <td className={s.varName}>{variation?.name ?? '—'}</td>}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {variations.length > 0 && (
+                        <div className={s.allocSection}>
+                          <p className={s.allocTitle}>Feature flag parameters</p>
+                          <table className={s.allocTable}>
+                            <thead>
+                              <tr><th>Parameter</th><th>Type</th><th>Baseline</th></tr>
+                            </thead>
+                            <tbody>
+                              {exp.feature_flag?.parameters?.map(param => (
+                                <tr key={param.name}>
+                                  <td><code>{param.name}</code></td>
+                                  <td>{param.type}</td>
+                                  <td><code>{JSON.stringify(param.default_value)}</code></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      <p className={s.expTimestamp}>
+                        Created {new Date(exp.created_at).toLocaleDateString()} ·
+                        Updated {new Date(exp.updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

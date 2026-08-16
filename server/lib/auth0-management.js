@@ -58,6 +58,29 @@ export async function patchUserMetadata(userId, user_metadata) {
   return data;
 }
 
+// Fetches all experiments from Auth0 Experiment Center.
+// Requires read:experimentation scope on the M2M client.
+export async function getExperiments() {
+  const token = await getManagementToken();
+  const res = await fetch(`https://${process.env.AUTH0_DOMAIN}/api/v2/experimentation/experiments`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || `Failed to fetch experiments: ${res.status}`);
+  return Array.isArray(data) ? data : (data.experiments ?? []);
+}
+
+// Fetches a single feature flag with its variations and parameters.
+export async function getFeatureFlag(flagId) {
+  const token = await getManagementToken();
+  const res = await fetch(`https://${process.env.AUTH0_DOMAIN}/api/v2/experimentation/feature-flags/${flagId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || `Failed to fetch feature flag: ${res.status}`);
+  return data;
+}
+
 // Creates a real Auth0 user via POST /api/v2/users.
 // https://auth0.com/docs/api/management/v2/users/post-users
 export async function createManagementUser({ email, password, connection = 'Username-Password-Authentication' }) {

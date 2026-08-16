@@ -184,6 +184,100 @@
 .previewHint { font-size: var(--font-size-sm); color: var(--muted-foreground); }
 .previewHint strong { color: var(--foreground); }
 
+/* ── Live Auth0 panel ── */
+.liveCard { margin-top: 1.5rem; }
+.liveHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 0.75rem;
+}
+.liveHeaderLeft { display: flex; align-items: center; gap: 0.625rem; }
+.liveIcon { color: var(--color-primary); flex-shrink: 0; }
+.liveTitle { font-size: var(--font-size-base); margin: 0; }
+.refreshBtn { gap: 0.375rem; font-size: var(--font-size-sm); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { animation: spin 0.8s linear infinite; }
+.liveBody { display: flex; flex-direction: column; gap: 0; padding-top: 0; }
+.liveError { font-size: var(--font-size-sm); color: var(--destructive); padding: 0.5rem 0; }
+.liveEmpty { font-size: var(--font-size-sm); color: var(--muted-foreground); padding: 0.5rem 0; }
+
+.expRow {
+  border-top: 1px solid var(--border);
+}
+.expRow:last-child { border-bottom: 1px solid var(--border); }
+.expRowHeader {
+  display: flex; align-items: center; gap: 0.625rem;
+  width: 100%; padding: 0.75rem 0; background: none; border: none;
+  cursor: pointer; text-align: left;
+}
+.expRowHeader:hover { background: var(--muted); border-radius: var(--radius-md); }
+.expChevron { color: var(--muted-foreground); flex-shrink: 0; }
+.expName { font-size: var(--font-size-sm); font-weight: 600; color: var(--foreground); flex: 1; }
+.expStatus { font-size: 0.6875rem; }
+.invalidBadge { font-size: 0.6875rem; color: var(--color-warning); border-color: var(--color-warning); }
+.expFlow { font-size: var(--font-size-xs); color: var(--muted-foreground); margin-left: auto; }
+
+.expDetail {
+  padding: 0 0 1rem 1.375rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+
+.idGrid { display: flex; flex-direction: column; gap: 0.375rem; }
+.idRow { display: flex; align-items: center; gap: 0.75rem; }
+.idLabel {
+  font-size: var(--font-size-xs); color: var(--muted-foreground);
+  min-width: 100px; font-weight: 500;
+}
+.metaRow {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.metaLabel {
+  font-size: var(--font-size-xs); color: var(--muted-foreground); font-weight: 500;
+}
+.metaValue {
+  font-size: var(--font-size-xs); color: var(--foreground);
+  background: var(--muted); border-radius: var(--radius-sm);
+  padding: 0.125rem 0.375rem; margin-right: 0.5rem;
+}
+
+.idChip {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  background: var(--muted); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0.1875rem 0.5rem;
+  font-size: var(--font-size-xs); cursor: pointer; color: var(--foreground);
+  transition: background 0.15s, border-color 0.15s;
+}
+.idChip:hover { background: var(--secondary); border-color: var(--color-primary); }
+.idChip code { font-family: monospace; letter-spacing: -0.01em; }
+
+.allocSection { display: flex; flex-direction: column; gap: 0.5rem; }
+.allocTitle { font-size: var(--font-size-xs); font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+.allocTable { width: 100%; border-collapse: collapse; font-size: var(--font-size-xs); }
+.allocTable th {
+  text-align: left; padding: 0.375rem 0.625rem; font-weight: 500;
+  color: var(--muted-foreground); border-bottom: 1px solid var(--border);
+}
+.allocTable td { padding: 0.375rem 0.625rem; vertical-align: middle; }
+.allocTable tr:hover td { background: var(--muted); }
+.controlRow td { background: color-mix(in oklch, var(--color-primary) 4%, transparent); }
+.roleCell { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.fallbackLabel { color: var(--muted-foreground); font-style: italic; }
+.varName { color: var(--foreground); font-weight: 500; }
+
+.expTimestamp { font-size: var(--font-size-xs); color: var(--muted-foreground); margin: 0; }
+
+/* ── UL demo row ── */
+.demoRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--color-primary) 4%, transparent);
+}
+.demoHint { font-size: var(--font-size-sm); color: var(--muted-foreground); margin: 0; }
+.demoBtns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
 /* ── Metric bars ── */
 .metricBars { display: grid; gap: 0.75rem; }
 .metricBar { display: flex; flex-direction: column; gap: 0.375rem; }
