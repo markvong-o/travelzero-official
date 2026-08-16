@@ -17,31 +17,35 @@
 
 import EmailOTPChallenge from '@auth0/auth0-acul-js/email-otp-challenge';
 import { getTheme } from './shared/themes.js';
+import { WORKZERO_CLIENT_ID, getWorkZeroCss } from './shared/workzero-styles.js';
 
 const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
 const TZ_LOGO = 'https://markvong-o.github.io/openmoji-icons/2708.png';
 
-let screen, ctx, clientId, isTravelZero, appTheme;
+let screen, ctx, clientId, isTravelZero, isWorkZero, appTheme;
 
 try {
   screen = new EmailOTPChallenge();
   ctx = window.universal_login_context;
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  isWorkZero = clientId === WORKZERO_CLIENT_ID;
   appTheme = getTheme(clientId);
 } catch (err) {
-  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+  console.error('[ACUL] Failed to initialize screen context:', err);
 }
 
-injectStyles(isTravelZero, appTheme ?? getTheme(null));
+injectStyles(isTravelZero, isWorkZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(ctx)
+  : isWorkZero
+  ? renderWorkZero(ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
-wireHandlers(screen, ctx);
+wireHandlers(isTravelZero, isWorkZero, screen, ctx);
 
 // ─── TravelZero renderer ────────────────────────────────────────────────────
 
@@ -85,6 +89,32 @@ function renderTravelZero(ctx) {
 
 // ─── Branded renderer ───────────────────────────────────────────────────────
 
+function renderWorkZero(ctx) {
+  const email = ctx?.screen?.data?.email ?? 'your email';
+  return `
+    <div class="wz-layout">
+      <div class="wz-panel">
+        <div class="wz-card">
+          <div class="wz-brand">
+            <span class="wz-brand-name">WorkZero</span>
+          </div>
+          <div class="wz-head">
+            <h1>Verify your email</h1>
+            <p>Enter the 6-digit code sent to ${email}</p>
+          </div>
+          <form id="otp-form" class="wz-form" novalidate>
+            <input type="text" name="code" id="code-workzero" inputmode="numeric" maxlength="6" placeholder="000000" required />
+            <button type="submit" class="wz-btn-primary">Verify</button>
+          </form>
+          <div class="wz-alt">
+            <a href="#" id="resend-link-workzero" class="wz-btn-ghost">Resend code</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderBranded(theme, ctx) {
   const backLink = ctx.screen?.links?.back ?? '#';
   const email = ctx.screen?.data?.email ?? 'your email';
@@ -121,37 +151,72 @@ function renderBranded(theme, ctx) {
 
 // ─── Event wiring ──────────────────────────────────────────────────────────
 
-function wireHandlers(screen, ctx) {
-  const otpForm = document.getElementById('otp-form');
-  const otpInput = document.getElementById('otp-code');
-  const verifyBtn = document.getElementById('verify-btn');
-  const resendBtn = document.getElementById('resend-btn');
-  const countdownEl = document.getElementById('resend-countdown');
+function wireHandlers(isTravelZero, isWorkZero, screen, ctx) {
+  if (isWorkZero) {
+    const otpForm = document.getElementById('otp-form');
+    const otpInput = document.getElementById('code-workzero');
+    const resendLink = document.getElementById('resend-link-workzero');
 
-  if (otpForm) {
-    otpForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const code = (otpInput?.value ?? '').trim();
-      if (code.length !== 6 || !/^\d{6}$/.test(code)) {
-        showError('Please enter a 6-digit code');
-        return;
-      }
-      setLoading(true);
-      try {
-        await screen.submitCode({ code });
-      } catch (err) {
-        showError(err.message ?? 'Invalid code. Please try again.');
-        setLoading(false);
-      }
-    });
-  }
+    if (otpForm) {
+      otpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = (otpInput?.value ?? '').trim();
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showError('Please enter a 6-digit code');
+          return;
+        }
+        try {
+          await screen.submitCode({ code });
+        } catch (err) {
+          showError(err.message ?? 'Invalid code. Please try again.');
+        }
+      });
+    }
 
-  if (resendBtn) {
-    resendBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      resendBtn.disabled = true;
-      try {
-        await screen.resendCode();
+    if (resendLink) {
+      resendLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        resendLink.disabled = true;
+        try {
+          await screen.resendCode();
+          resendLink.disabled = false;
+        } catch (err) {
+          showError(err.message ?? 'Failed to resend code');
+          resendLink.disabled = false;
+        }
+      });
+    }
+  } else {
+    const otpForm = document.getElementById('otp-form');
+    const otpInput = document.getElementById('otp-code');
+    const verifyBtn = document.getElementById('verify-btn');
+    const resendBtn = document.getElementById('resend-btn');
+    const countdownEl = document.getElementById('resend-countdown');
+
+    if (otpForm) {
+      otpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = (otpInput?.value ?? '').trim();
+        if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+          showError('Please enter a 6-digit code');
+          return;
+        }
+        setLoading(true);
+        try {
+          await screen.submitCode({ code });
+        } catch (err) {
+          showError(err.message ?? 'Invalid code. Please try again.');
+          setLoading(false);
+        }
+      });
+    }
+
+    if (resendBtn) {
+      resendBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        resendBtn.disabled = true;
+        try {
+          await screen.resendCode();
         // Start countdown if available
         const resend = screen.resendManager({ timeoutSeconds: 60 });
         if (resend && resend.startResend) {
@@ -169,6 +234,7 @@ function wireHandlers(screen, ctx) {
       resendBtn.disabled = true;
       if (countdownEl) countdownEl.textContent = ' (Try again in a moment)';
     }
+  }
   }
 }
 
@@ -195,7 +261,7 @@ function showError(msg) {
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-function injectStyles(isTravelZero, theme) {
+function injectStyles(isTravelZero, isWorkZero, theme) {
   const style = document.createElement('style');
 
   const bgCss = theme.bg
@@ -372,5 +438,8 @@ function injectStyles(isTravelZero, theme) {
       padding: 0.75rem 1rem; margin-bottom: 1rem; line-height: 1.5;
     }
   `;
+
+  style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
+
   document.head.appendChild(style);
 }

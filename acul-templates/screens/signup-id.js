@@ -13,6 +13,7 @@
 
 import SignupId from '@auth0/auth0-acul-js/signup-id';
 import { getTheme } from './shared/themes.js';
+import { WORKZERO_CLIENT_ID, getWorkZeroCss } from './shared/workzero-styles.js';
 
 const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
@@ -26,28 +27,31 @@ const SLIDES = [
   { src: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1920&q=80', label: 'Lake Como', caption: 'Alpine elegance on Europe\'s deepest lake' },
 ];
 
-let screen, ctx, clientId, isTravelZero, experiment, isPasswordless, appTheme;
+let screen, ctx, clientId, isTravelZero, isWorkZero, experiment, isPasswordless, appTheme;
 
 try {
   screen = new SignupId();
   ctx = window.universal_login_context;
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  isWorkZero = clientId === WORKZERO_CLIENT_ID;
   experiment = ctx.experiment;
   isPasswordless = isTravelZero && experiment ? !experiment.is_control : false;
   appTheme = getTheme(clientId);
 } catch (err) {
-  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+  console.error('[ACUL] Failed to initialize screen context:', err);
 }
 
-injectStyles(isTravelZero, appTheme ?? getTheme(null));
+injectStyles(isTravelZero, isWorkZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(isPasswordless, ctx)
+  : isWorkZero
+  ? renderWorkZero(ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
-wireHandlers(screen);
+wireHandlers(isTravelZero, isWorkZero, screen);
 if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
@@ -100,6 +104,29 @@ function renderPassword() {
 }
 
 // ─── Carousel ────────────────────────────────────────────────────────────────
+
+function renderWorkZero(ctx) {
+  return `
+    <div class="wz-layout">
+      <div class="wz-panel">
+        <div class="wz-card">
+          <div class="wz-brand">
+            <span class="wz-brand-name">WorkZero</span>
+          </div>
+          <div class="wz-head">
+            <h1>Create your account</h1>
+            <p>Join WorkZero today</p>
+          </div>
+          <form id="email-form" class="wz-form" novalidate>
+            <input type="email" name="username" id="username-workzero" placeholder="your@email.com" autocomplete="email" required />
+            <button type="submit" class="wz-btn-primary">Sign up</button>
+          </form>
+          <div class="wz-alt">Already have an account? <a href="${ctx.screen?.links?.login ?? '#'}">Sign in</a></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 function renderCarousel() {
   return `
@@ -181,16 +208,20 @@ function renderBranded(theme, ctx) {
 
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
-function wireHandlers(screen) {
+function wireHandlers(isTravelZero, isWorkZero, screen) {
   // signup-id only collects the identifier — the next screen depends on the
   // variant (passwordless: email-identifier-challenge; password: signup-password).
-  // SignupOptions requires the identifier under its typed key (email/username/phone)
-  // rather than a generic field, so identifierParams() reads the transaction's
-  // actual requiredIdentifiers instead of hardcoding.
-  bind('email-form', 'submit', async (e) => {
-    e.preventDefault();
-    await submit(screen, identifierParams(screen, val('email-input')));
-  });
+  if (isWorkZero) {
+    bind('email-form', 'submit', async (e) => {
+      e.preventDefault();
+      await submit(screen, identifierParams(screen, val('username-workzero')));
+    });
+  } else {
+    bind('email-form', 'submit', async (e) => {
+      e.preventDefault();
+      await submit(screen, identifierParams(screen, val('email-input')));
+    });
+  }
 }
 
 // Reads the transaction's actual requiredIdentifiers/optionalIdentifiers
@@ -269,7 +300,7 @@ function iconPlane() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-function injectStyles(isTravelZero, theme) {
+function injectStyles(isTravelZero, isWorkZero, theme) {
   const style = document.createElement('style');
 
   const bgCss = theme.bg
@@ -488,5 +519,8 @@ function injectStyles(isTravelZero, theme) {
 
     .tz-hidden { display: none !important; }
   `;
+
+  style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
+
   document.head.appendChild(style);
 }

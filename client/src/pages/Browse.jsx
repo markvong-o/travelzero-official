@@ -297,14 +297,14 @@ export default function Browse() {
         <div className={s.heroGlow} />
         <div className={s.heroScrim} />
         <div className={s.heroInner}>
-          <span className={s.heroPill}>
+          {/* <span className={s.heroPill}>
             <Sparkles size={14} />
             10,000 bonus points on signup
-          </span>
+          </span> */}
           <h1 className={`font-display ${s.heroTitle}`}>Discover Your Next Italian Adventure</h1>
           <p className={s.heroSubtitle}>
             Explore Italy's most enchanting destinations. Sign up for a free account and unlock
-            10,000 loyalty points!
+            loyalty points!
           </p>
         </div>
       </div>

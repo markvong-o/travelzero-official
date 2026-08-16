@@ -14,6 +14,7 @@
 
 import LoginId from '@auth0/auth0-acul-js/login-id';
 import { getTheme } from './shared/themes.js';
+import { WORKZERO_CLIENT_ID, getWorkZeroCss } from './shared/workzero-styles.js';
 
 const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
@@ -27,28 +28,31 @@ const SLIDES = [
   { src: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1920&q=80', label: 'Lake Como', caption: 'Alpine elegance on Europe\'s deepest lake' },
 ];
 
-let screen, ctx, clientId, isTravelZero, experiment, isPasswordless, appTheme;
+let screen, ctx, clientId, isTravelZero, isWorkZero, experiment, isPasswordless, appTheme;
 
 try {
   screen = new LoginId();
   ctx = window.universal_login_context;
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  isWorkZero = clientId === WORKZERO_CLIENT_ID;
   experiment = ctx.experiment;
   isPasswordless = isTravelZero && experiment ? !experiment.is_control : false;
   appTheme = getTheme(clientId);
 } catch (err) {
-  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+  console.error('[ACUL] Failed to initialize screen context:', err);
 }
 
-injectStyles(isTravelZero, appTheme ?? getTheme(null));
+injectStyles(isTravelZero, isWorkZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(isPasswordless, ctx)
+  : isWorkZero
+  ? renderWorkZero(ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
-wireHandlers(isPasswordless, screen);
+wireHandlers(isTravelZero, isWorkZero, isPasswordless, screen);
 if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
@@ -70,6 +74,29 @@ function renderTravelZero(passwordless, ctx) {
         </div>
       </div>
       ${renderCarousel()}
+    </div>
+  `;
+}
+
+function renderWorkZero(ctx) {
+  return `
+    <div class="wz-layout">
+      <div class="wz-panel">
+        <div class="wz-card">
+          <div class="wz-brand">
+            <span class="wz-brand-name">WorkZero</span>
+          </div>
+          <div class="wz-head">
+            <h1>Sign in to your account</h1>
+            <p>Enter your email to continue</p>
+          </div>
+          <form id="login-form" class="wz-form" novalidate>
+            <input type="email" name="username" id="username-workzero" placeholder="your@email.com" autocomplete="email" required />
+            <button type="submit" class="wz-btn-primary">Continue</button>
+          </form>
+          <div class="wz-alt">Don't have an account? <a href="${ctx.screen?.links?.signup ?? '#'}">Sign up</a></div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -174,39 +201,52 @@ function renderBranded(theme, ctx) {
 
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
-function wireHandlers(passwordless, screen) {
-  if (passwordless) {
-    // TravelZero passwordless: primary email form for OTP verification
-    bind('email-form', 'submit', async (e) => {
+function wireHandlers(isTravelZero, isWorkZero, passwordless, screen) {
+  if (isTravelZero) {
+    if (passwordless) {
+      // TravelZero passwordless: primary email form for OTP verification
+      bind('email-form', 'submit', async (e) => {
+        e.preventDefault();
+        await submit(screen, { username: val('username-email') });
+      });
+
+      // TravelZero passwordless: passkey alternative
+      bind('passkey-alternative', 'click', async () => {
+        await submitPasskey(screen, { username: val('username-email') });
+      });
+    }
+
+    // TravelZero password-first: primary login form
+    bind('login-form', 'submit', async (e) => {
       e.preventDefault();
-      await submit(screen, { username: val('username-email') });
+      const params = { username: val('username-main') };
+      if (document.getElementById('password-main')) {
+        params.password = val('password-main');
+      }
+      await submit(screen, params);
     });
 
-    // TravelZero passwordless: passkey alternative
-    bind('passkey-alternative', 'click', async () => {
-      await submitPasskey(screen, { username: val('username-email') });
+    // TravelZero password-first: passkey alternative
+    bind('passkey-option', 'click', async () => {
+      await submitPasskey(screen, { username: val('username-main') });
+    });
+  } else if (isWorkZero) {
+    // WorkZero: simple email-based login form
+    bind('login-form', 'submit', async (e) => {
+      e.preventDefault();
+      await submit(screen, { username: val('username-workzero') });
+    });
+  } else {
+    // Branded apps: standard login form
+    bind('login-form', 'submit', async (e) => {
+      e.preventDefault();
+      const params = { username: val('username-main') };
+      if (document.getElementById('password-main')) {
+        params.password = val('password-main');
+      }
+      await submit(screen, params);
     });
   }
-
-  // TravelZero password-first: primary login form collects username + password
-  // together so both factors submit in one shot — avoids a second screen that
-  // would fall back to classic Universal Login (only login-id/signup-id are
-  // built as ACUL screens here). Branded (non-TravelZero) apps reuse this same
-  // form id but have no password-main field, so only attach it when present.
-  bind('login-form', 'submit', async (e) => {
-    e.preventDefault();
-    const params = { username: val('username-main') };
-    if (document.getElementById('password-main')) {
-      params.password = val('password-main');
-    }
-    await submit(screen, params);
-  });
-
-  // TravelZero password-first: passkey alternative — same reasoning as above,
-  // must call passkeyLogin() directly rather than the generic login().
-  bind('passkey-option', 'click', async () => {
-    await submitPasskey(screen, { username: val('username-main') });
-  });
 }
 
 function bind(id, event, handler) {
@@ -293,7 +333,7 @@ function initCarousel() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-function injectStyles(isTravelZero, theme) {
+function injectStyles(isTravelZero, isWorkZero, theme) {
   const style = document.createElement('style');
 
   const bgCss = theme.bg
@@ -568,5 +608,8 @@ function injectStyles(isTravelZero, theme) {
 
     .tz-hidden { display: none !important; }
   `;
+
+  style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
+
   document.head.appendChild(style);
 }

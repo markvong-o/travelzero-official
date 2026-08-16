@@ -12,6 +12,7 @@ export default defineConfig({
         'email-identifier-challenge': resolve(__dirname, 'screens/email-identifier-challenge.js'),
         'email-otp-challenge':       resolve(__dirname, 'screens/email-otp-challenge.js'),
         'passkey-enrollment':        resolve(__dirname, 'screens/passkey-enrollment.js'),
+        'organization-selection':    resolve(__dirname, 'screens/organization-selection.js'),
       },
       output: {
         format: 'es',

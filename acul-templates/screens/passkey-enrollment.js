@@ -17,30 +17,34 @@
 
 import PasskeyEnrollment from '@auth0/auth0-acul-js/passkey-enrollment';
 import { getTheme } from './shared/themes.js';
+import { WORKZERO_CLIENT_ID, getWorkZeroCss } from './shared/workzero-styles.js';
 
 const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_LOGO = 'https://markvong-o.github.io/openmoji-icons/2708.png';
 
-let screen, ctx, clientId, isTravelZero, appTheme;
+let screen, ctx, clientId, isTravelZero, isWorkZero, appTheme;
 
 try {
   screen = new PasskeyEnrollment();
   ctx = window.universal_login_context;
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  isWorkZero = clientId === WORKZERO_CLIENT_ID;
   appTheme = getTheme(clientId);
 } catch (err) {
-  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+  console.error('[ACUL] Failed to initialize screen context:', err);
 }
 
-injectStyles(isTravelZero, appTheme ?? getTheme(null));
+injectStyles(isTravelZero, isWorkZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(ctx)
+  : isWorkZero
+  ? renderWorkZero(ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
-wireHandlers(screen, ctx);
+wireHandlers(isTravelZero, isWorkZero, screen, ctx);
 
 // ─── TravelZero renderer ────────────────────────────────────────────────────
 
@@ -67,6 +71,28 @@ function renderTravelZero(ctx) {
 }
 
 // ─── Branded renderer ───────────────────────────────────────────────────────
+
+function renderWorkZero(ctx) {
+  return `
+    <div class="wz-layout">
+      <div class="wz-panel">
+        <div class="wz-card">
+          <div class="wz-brand">
+            <span class="wz-brand-name">WorkZero</span>
+          </div>
+          <div class="wz-head">
+            <h1>Set up your passkey</h1>
+            <p>Use Face ID, Touch ID, or your security key to sign in faster</p>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.75rem;">
+            <button id="enroll-btn-workzero" type="button" class="wz-btn-primary">Set up passkey</button>
+            <button id="skip-btn-workzero" type="button" class="wz-btn-ghost" style="width: 100%; padding: 0.75rem; text-align: center; border: none; background: none;">Skip for now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 function renderBranded(theme, ctx) {
   return `
@@ -97,38 +123,63 @@ function renderBranded(theme, ctx) {
 
 // ─── Event wiring ──────────────────────────────────────────────────────────
 
-function wireHandlers(screen, ctx) {
-  const enrollBtn = document.getElementById('enroll-btn');
-  const skipBtn = document.getElementById('skip-btn');
+function wireHandlers(isTravelZero, isWorkZero, screen, ctx) {
+  if (isWorkZero) {
+    const enrollBtn = document.getElementById('enroll-btn-workzero');
+    const skipBtn = document.getElementById('skip-btn-workzero');
 
-  if (enrollBtn) {
-    enrollBtn.addEventListener('click', async () => {
-      setLoading(true);
-      try {
-        // SDK handles the entire WebAuthn ceremony: shows the browser prompt,
-        // captures the credential, validates it, and advances the transaction.
-        await screen.continuePasskeyEnrollment();
-      } catch (err) {
-        // User cancelled the browser WebAuthn dialog, or the ceremony failed.
-        // Show error but leave button enabled so they can retry.
-        showError(err.message ?? 'Passkey setup failed. Please try again.');
-        setLoading(false);
-      }
-    });
-  }
+    if (enrollBtn) {
+      enrollBtn.addEventListener('click', async () => {
+        try {
+          await screen.continuePasskeyEnrollment();
+        } catch (err) {
+          showError(err.message ?? 'Passkey setup failed. Please try again.');
+        }
+      });
+    }
 
-  if (skipBtn) {
-    skipBtn.addEventListener('click', async () => {
-      setLoading(true);
-      try {
-        // Auto-advance without enrolling. The transaction continues to the
-        // next step (usually the dashboard or post-signup page).
-        await screen.abortPasskeyEnrollment();
-      } catch (err) {
-        showError(err.message ?? 'Failed to skip passkey setup');
-        setLoading(false);
-      }
-    });
+    if (skipBtn) {
+      skipBtn.addEventListener('click', async () => {
+        try {
+          await screen.abortPasskeyEnrollment();
+        } catch (err) {
+          showError(err.message ?? 'Failed to skip passkey setup');
+        }
+      });
+    }
+  } else {
+    const enrollBtn = document.getElementById('enroll-btn');
+    const skipBtn = document.getElementById('skip-btn');
+
+    if (enrollBtn) {
+      enrollBtn.addEventListener('click', async () => {
+        setLoading(true);
+        try {
+          // SDK handles the entire WebAuthn ceremony: shows the browser prompt,
+          // captures the credential, validates it, and advances the transaction.
+          await screen.continuePasskeyEnrollment();
+        } catch (err) {
+          // User cancelled the browser WebAuthn dialog, or the ceremony failed.
+          // Show error but leave button enabled so they can retry.
+          showError(err.message ?? 'Passkey setup failed. Please try again.');
+          setLoading(false);
+        }
+      });
+    }
+
+    if (skipBtn) {
+      skipBtn.addEventListener('click', async () => {
+        setLoading(true);
+        try {
+          // Auto-advance without enrolling. The transaction continues to the
+          // next step (usually the dashboard or post-signup page).
+          await screen.abortPasskeyEnrollment();
+        } catch (err) {
+          showError(err.message ?? 'Failed to skip passkey setup');
+          setLoading(false);
+        }
+      });
+    }
   }
 }
 
@@ -161,7 +212,7 @@ function iconFingerprint() {
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-function injectStyles(isTravelZero, theme) {
+function injectStyles(isTravelZero, isWorkZero, theme) {
   const style = document.createElement('style');
 
   style.textContent = `
@@ -285,5 +336,8 @@ function injectStyles(isTravelZero, theme) {
       padding: 0.75rem 1rem; margin-bottom: 1rem; line-height: 1.5;
     }
   `;
+
+  style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
+
   document.head.appendChild(style);
 }

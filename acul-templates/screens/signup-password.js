@@ -19,6 +19,7 @@
 
 import SignupPassword from '@auth0/auth0-acul-js/signup-password';
 import { getTheme } from './shared/themes.js';
+import { WORKZERO_CLIENT_ID, getWorkZeroCss } from './shared/workzero-styles.js';
 
 const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
@@ -30,29 +31,54 @@ const SLIDES = [
   { src: 'https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=1920&q=80', label: 'Amalfi Coast', caption: 'Cliff-hanging views, Mediterranean bliss' },
 ];
 
-let screen, ctx, clientId, isTravelZero, appTheme;
+let screen, ctx, clientId, isTravelZero, isWorkZero, appTheme;
 
 try {
   screen = new SignupPassword();
   ctx = window.universal_login_context;
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  isWorkZero = clientId === WORKZERO_CLIENT_ID;
   appTheme = getTheme(clientId);
 } catch (err) {
-  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+  console.error('[ACUL] Failed to initialize screen context:', err);
 }
 
-injectStyles(isTravelZero, appTheme ?? getTheme(null));
+injectStyles(isTravelZero, isWorkZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(screen)
+  : isWorkZero
+  ? renderWorkZero(screen, ctx)
   : renderBranded(appTheme ?? getTheme(null), screen);
 
-wireHandlers(screen);
+wireHandlers(isTravelZero, isWorkZero, screen);
 if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderer ───────────────────────────────────────────────────
+
+function renderWorkZero(screen, ctx) {
+  return `
+    <div class="wz-layout">
+      <div class="wz-panel">
+        <div class="wz-card">
+          <div class="wz-brand">
+            <span class="wz-brand-name">WorkZero</span>
+          </div>
+          <div class="wz-head">
+            <h1>Create a password</h1>
+            <p>Secure your account</p>
+          </div>
+          <form id="password-form" class="wz-form" novalidate>
+            <input type="password" name="password" id="password-workzero" placeholder="••••••••••" autocomplete="new-password" required />
+            <button type="submit" class="wz-btn-primary">Complete signup</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 function renderTravelZero(screen) {
   const email = screen?.screen?.data?.email ?? '';
@@ -163,11 +189,18 @@ function renderBranded(theme, screen) {
 
 // ─── Event wiring ───────────────────────────────────────────────────────────
 
-function wireHandlers(screen) {
-  bind('password-form', 'submit', async (e) => {
-    e.preventDefault();
-    await submit(screen, { email: screen?.screen?.data?.email ?? '', password: val('password-main') });
-  });
+function wireHandlers(isTravelZero, isWorkZero, screen) {
+  if (isWorkZero) {
+    bind('password-form', 'submit', async (e) => {
+      e.preventDefault();
+      await submit(screen, { email: screen?.screen?.data?.email ?? '', password: val('password-workzero') });
+    });
+  } else {
+    bind('password-form', 'submit', async (e) => {
+      e.preventDefault();
+      await submit(screen, { email: screen?.screen?.data?.email ?? '', password: val('password-main') });
+    });
+  }
 }
 
 function bind(id, event, handler) {
@@ -209,7 +242,7 @@ function showError(msg) {
 
 // ─── Styles ─────────────────────────────────────────────────────────────────
 
-function injectStyles(isTravelZero, theme) {
+function injectStyles(isTravelZero, isWorkZero, theme) {
   const style = document.createElement('style');
 
   const bgCss = theme.bg
@@ -386,5 +419,8 @@ function injectStyles(isTravelZero, theme) {
       line-height: 1.5;
     }
   `;
+
+  style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
+
   document.head.appendChild(style);
 }
