@@ -54,8 +54,9 @@ if (isTravelZero) initCarousel();
 
 function renderTravelZero(passwordless, ctx) {
   const loginUrl = ctx.screen?.links?.login ?? '#';
+  const variantClass = passwordless ? '' : 'tz-layout--password';
   return `
-    <div class="tz-layout">
+    <div class="tz-layout ${variantClass}">
       <div class="tz-panel">
         <div class="tz-card">
           <div class="tz-brand">

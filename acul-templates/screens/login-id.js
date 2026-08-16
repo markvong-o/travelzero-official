@@ -63,7 +63,7 @@ function renderTravelZero(passkeyFirst, ctx) {
           <div class="tz-brand">
             <img src="${TZ_LOGO}" class="tz-logo" alt="" />
             <span class="tz-brand-name">TravelZero</span>
-            ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passkey-first' : 'Password-first'}</span>` : ''}
+            ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passwordless' : 'Password'}</span>` : ''}
           </div>
           ${passkeyFirst ? renderPasskeyFirst(ctx) : renderPasswordFirst()}
           <p class="tz-alt">Don't have an account? <a href="${signupUrl}">Sign up</a></p>
