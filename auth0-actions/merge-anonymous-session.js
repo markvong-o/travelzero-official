@@ -18,16 +18,28 @@
  *     created_at: number   — unix timestamp
  *     expires_at: number   — unix timestamp
  *     metadata:   object   — key/value strings set when POST /anonymous/token was called
- *       - destination: string (destination ID, e.g. "rome")
- *       - favorites:   JSON string — array of { id, name, region, color, tagline }
+ *       - destination:    string (destination ID, e.g. "rome")
+ *       - favorites:      JSON string — array of { id, name, region, color, tagline }
+ *       - bonusEligible:  "true" if the client determined loyalty-points-bonus
+ *                         eligibility (destination present OR London
+ *                         flight/hotel view threshold met — see
+ *                         client/src/context/AuthContext.jsx's signup() and
+ *                         client/src/lib/view-tracking.js). Anonymous session
+ *                         metadata values are always strings, not booleans.
  *   }
  *
  * REQUIRED: Anonymous Sessions beta must be enabled for your tenant.
  *   See: https://auth0.com/docs/manage-users/sessions/anonymous-sessions/configure-anonymous-sessions
+ *
+ * Mirrors the mock-mode grant logic in server/routes/auth.js so both modes
+ * agree: 10,000 points for demonstrated intent, 0 otherwise — never a
+ * universal signup perk.
  */
 
-const ANON_CLAIM   = 'https://travelzero.demo/anonymous_session';
-const FAVS_CLAIM   = 'https://travelzero.demo/favorites';
+const ANON_CLAIM    = 'https://travelzero.demo/anonymous_session';
+const FAVS_CLAIM     = 'https://travelzero.demo/favorites';
+const LOYALTY_CLAIM  = 'https://travelzero.demo/loyalty_points';
+const SIGNUP_BONUS_POINTS = 10000;
 
 function extractAnonData(event) {
   const anon = event.anonymous_session;
@@ -39,11 +51,12 @@ function extractAnonData(event) {
   }
 
   return {
-    destination: anon.metadata?.destination ?? null,
-    favorites:   Array.isArray(favorites) ? favorites : null,
-    anonUserId:  anon.user_id,
-    sessionId:   anon.session_id,
-    expiresAt:   anon.expires_at,
+    destination:   anon.metadata?.destination ?? null,
+    favorites:     Array.isArray(favorites) ? favorites : null,
+    bonusEligible: anon.metadata?.bonusEligible === 'true' || anon.metadata?.bonusEligible === true,
+    anonUserId:    anon.user_id,
+    sessionId:     anon.session_id,
+    expiresAt:     anon.expires_at,
   };
 }
 
@@ -66,6 +79,16 @@ exports.onExecutePreUserRegistration = async (event, api) => {
   // The client reads user_metadata.favorites to populate the Dashboard.
   if (data.favorites?.length > 0) {
     api.user.setUserMetadata('favorites', data.favorites);
+  }
+
+  // Grant the loyalty-points signup bonus only when the client determined
+  // real intent was demonstrated — not a universal welcome perk. The
+  // destination signal is trusted client-side only (no server-side tracking
+  // exists for it); the view-threshold signal is genuinely server-tracked
+  // (Auth0's own anonymous session), so this is as trustworthy as the
+  // mock-mode equivalent that additionally cross-checks a real counter.
+  if (data.bonusEligible) {
+    api.user.setUserMetadata('loyaltyPoints', SIGNUP_BONUS_POINTS);
   }
 };
 
@@ -115,5 +138,14 @@ exports.onExecutePostLogin = async (event, api) => {
   // Management API call. This powers the Dashboard favorites list.
   if (Array.isArray(claimFavorites) && claimFavorites.length > 0) {
     api.idToken.setCustomClaim(FAVS_CLAIM, claimFavorites);
+  }
+
+  // Same pattern for the loyalty-points bonus granted at signup (see
+  // onExecutePreUserRegistration above) — expose it as a claim on every
+  // login, not just the first, so AuthContext.jsx never needs a Management
+  // API round-trip just to show the balance.
+  const loyaltyPoints = event.user.user_metadata?.loyaltyPoints;
+  if (typeof loyaltyPoints === 'number') {
+    api.idToken.setCustomClaim(LOYALTY_CLAIM, loyaltyPoints);
   }
 };

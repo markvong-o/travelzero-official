@@ -5,7 +5,7 @@
  */
 
 const store = {
-  // Sessions: { [sessionId]: { id, createdAt, userId, isAnonymous, favorites, securityFlag } }
+  // Sessions: { [sessionId]: { id, createdAt, userId, isAnonymous, favorites, securityFlag, viewCounts } }
   sessions: {},
 
   // Users: { [userId]: { id, email, method, passwordHash, user_metadata, loyaltyPoints, createdAt } }
@@ -36,6 +36,10 @@ const store = {
       isAnonymous: true,
       favorites: [],
       securityFlag: false,
+      // Per-destination view counts for the anonymous-conversion signup banner
+      // — server-authoritative so /signup can cross-check a client-asserted
+      // eligibility flag against real tracked behavior.
+      viewCounts: {},
     };
     store.sessions[id] = session;
     return session;

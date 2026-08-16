@@ -22,6 +22,31 @@ import api from '../api.js';
 import { isAuth0Configured } from '../lib/auth-config';
 import s from './Dashboard.module.css';
 
+const FAV_GROUPS = [
+  { type: 'destination', label: 'Destinations' },
+  { type: 'activity', label: 'Activities' },
+  { type: 'flight', label: 'Flights' },
+  { type: 'hotel', label: 'Hotels' },
+];
+
+function favLabel(fav) {
+  if (fav.type === 'flight') return `${fav.airline} ${fav.flightNumber}`;
+  return fav.name;
+}
+
+function favSubtext(fav) {
+  switch (fav.type) {
+    case 'activity':
+      return `$${fav.cost}${fav.partner ? ` · ${fav.partner}` : ''}`;
+    case 'flight':
+      return `${fav.route} · $${fav.priceUSD}`;
+    case 'hotel':
+      return `${fav.location} · $${fav.pricePerNightUSD}/night`;
+    default:
+      return fav.region;
+  }
+}
+
 // Anonymous users never reach this page — AppLayout redirects to /login
 // before this component mounts.
 export default function Dashboard() {
@@ -134,43 +159,56 @@ export default function Dashboard() {
           <CardTitle>Your Favorites</CardTitle>
         </CardHeader>
         <CardContent>
-          {(authUser?.user_metadata?.favorites ?? profile.favorites ?? []).length > 0 ? (
-            <div className={s.favGrid}>
-              {(authUser?.user_metadata?.favorites ?? profile.favorites ?? []).map((fav) => (
-                <div key={fav.id} className={s.favItem}>
-                  <div
-                    className={s.favSwatch}
-                    style={{ background: destinationGradient(fav.color) }}
-                  />
-                  <div className={s.favInfo}>
-                    <p className={s.favName}>{fav.name}</p>
-                    <p className={s.favRegion}>{fav.region}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={s.favRemove}
-                    onClick={async () => {
-                      await removeFavorite(fav.id);
-                      showToast(`${fav.name} removed from favorites`, 'info');
-                    }}
-                    aria-label={`Remove ${fav.name} from favorites`}
-                  >
-                    <X size={14} />
-                  </button>
+          {(() => {
+            const favorites = authUser?.user_metadata?.favorites ?? profile.favorites ?? [];
+            if (favorites.length === 0) {
+              return (
+                <div className={s.empty}>
+                  <Heart size={20} className={s.emptyIcon} />
+                  <p className={s.emptyText}>
+                    Select any destination with the heart icon to save it for later reference.
+                  </p>
+                  <Button asChild variant="outline">
+                    <Link to="/">Browse destinations</Link>
+                  </Button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className={s.empty}>
-              <Heart size={20} className={s.emptyIcon} />
-              <p className={s.emptyText}>
-                Select any destination with the heart icon to save it for later reference.
-              </p>
-              <Button asChild variant="outline">
-                <Link to="/">Browse destinations</Link>
-              </Button>
-            </div>
-          )}
+              );
+            }
+            return FAV_GROUPS.map(({ type, label }) => {
+              const items = favorites.filter((f) => f.type === type);
+              if (items.length === 0) return null;
+              return (
+                <div key={type} className={s.favGroup}>
+                  <h3 className={s.favGroupTitle}>{label}</h3>
+                  <div className={s.favGrid}>
+                    {items.map((fav) => (
+                      <div key={fav.id} className={s.favItem}>
+                        <div
+                          className={s.favSwatch}
+                          style={{ background: destinationGradient(fav.color) }}
+                        />
+                        <div className={s.favInfo}>
+                          <p className={s.favName}>{favLabel(fav)}</p>
+                          <p className={s.favRegion}>{favSubtext(fav)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className={s.favRemove}
+                          onClick={async () => {
+                            await removeFavorite(fav.id);
+                            showToast(`${favLabel(fav)} removed from favorites`, 'info');
+                          }}
+                          aria-label={`Remove ${favLabel(fav)} from favorites`}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            });
+          })()}
         </CardContent>
       </Card>
 

@@ -20,6 +20,10 @@ const DESTINATION_GRADIENTS = {
   amalfi: 'linear-gradient(135deg, #0EA5E9, #00C2A8)',
   tuscany: 'linear-gradient(135deg, #00C2A8, #10B981)',
   como: 'linear-gradient(135deg, #3B29C4, #0EA5E9)',
+  london: 'linear-gradient(135deg, #1E3A5F, #C8102E)',
+  'thames-cruise': 'linear-gradient(135deg, #1E3A5F, #4F86F7)',
+  'rooftop-dinner': 'linear-gradient(135deg, #7A5CFA, #C8102E)',
+  'kent-vineyard': 'linear-gradient(135deg, #10B981, #00C2A8)',
 };
 
 export function destinationGradient(color) {

@@ -193,6 +193,16 @@
   transform: scale(1.3);
 }
 
+.activitiesTitle {
+  margin-top: 3rem;
+}
+
+.activitiesGrid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
 @media (min-width: 768px) {
   .banner { flex-direction: row; justify-content: space-between; gap: 0; }
   .hero { min-height: 540px; }
@@ -201,9 +211,11 @@
 
 @media (max-width: 1024px) {
   .carousel { grid-template-columns: repeat(2, 1fr); }
+  .activitiesGrid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 639px) {
   .carousel { grid-template-columns: 1fr; }
   .carouselArrow { display: none; }
+  .activitiesGrid { grid-template-columns: 1fr; }
 }

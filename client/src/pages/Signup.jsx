@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Fingerprint, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { meetsViewThreshold } from '../lib/view-tracking';
 import { useToast } from '../context/ToastContext';
 import { useExperiment } from '../context/ExperimentContext';
 import { useWebAuthnPrompt, WebAuthnPrompt } from '../components/WebAuthnPrompt';
@@ -29,6 +30,7 @@ const DESTINATION_COPY = {
   amalfi: { name: 'the Amalfi Coast', emoji: '🏖️' },
   tuscany: { name: 'Tuscany', emoji: '🍇' },
   como: { name: 'Lake Como', emoji: '🏔️' },
+  london: { name: 'London', emoji: '🎡' },
 };
 
 // Promoted from the old SignupModal.jsx (a shadcn Dialog opened from
@@ -58,10 +60,12 @@ export default function Signup() {
       try {
         await signup('emma@demo.travelzero.com', 'passkey', null);
       } catch {
-        // User already exists — sign in instead
+        // User already exists — sign in instead. This is the pre-seeded demo
+        // Emma account, so no fresh loyalty-points grant applies here either
+        // way — login doesn't return a points figure to report accurately.
         await login('emma@demo.travelzero.com', 'passkey');
       }
-      showToast('Welcome! You earned 10,000 loyalty points! 🎉', 'success');
+      showToast('Welcome to TravelZero!', 'success');
       navigate(returnTo);
     } catch {
       showToast('Google sign-up failed', 'error');
@@ -71,7 +75,19 @@ export default function Signup() {
   };
 
   const returnTo = searchParams.get('returnTo') || '/dashboard';
-  const destination = DESTINATION_COPY[searchParams.get('destination')];
+  const destinationParam = searchParams.get('destination');
+  const destination = DESTINATION_COPY[destinationParam];
+  const viewThresholdMet = meetsViewThreshold('london');
+  // Two distinct concerns, kept separate on purpose:
+  // - Reward eligibility (destinationParam present OR viewThresholdMet) is
+  //   decided server-side (server/routes/auth.js) from the raw signals —
+  //   it does not depend on which messaging variant is shown.
+  // - showPersonalizedCTA only controls copy. exp_anon_conversion still gates
+  //   the destination-based personalized framing specifically (that's what
+  //   the experiment tests — same reward, different messaging), but the new
+  //   view-threshold signal isn't part of that experiment, so it always shows
+  //   personalized copy when true.
+  const showPersonalizedCTA = (anonConversionTreatment && Boolean(destination)) || viewThresholdMet;
   const authRedirect = isAuth0Configured();
 
   useEffect(() => {
@@ -88,8 +104,13 @@ export default function Signup() {
     return <div className={s.redirect}>Redirecting to sign up…</div>;
   }
 
-  const finishSignup = () => {
-    showToast('Welcome! You earned 10,000 loyalty points! 🎉', 'success');
+  const finishSignup = (result) => {
+    showToast(
+      result?.loyaltyPoints > 0
+        ? `Welcome! You earned ${result.loyaltyPoints.toLocaleString()} loyalty points! 🎉`
+        : 'Welcome to TravelZero!',
+      'success'
+    );
     navigate(returnTo);
   };
 
@@ -101,8 +122,8 @@ export default function Signup() {
     setLoading(true);
     try {
       await prompt(mfaCopyTreatment ? 'One more step to keep your account secure' : 'Use Face ID / Touch ID / Security Key');
-      await signup(email, 'passkey');
-      finishSignup();
+      const result = await signup(email, 'passkey', null, destinationParam);
+      finishSignup(result);
     } catch (error) {
       showToast(error.error || 'Signup failed', 'error');
     } finally {
@@ -118,8 +139,8 @@ export default function Signup() {
     }
     setLoading(true);
     try {
-      await signup(email, 'password', password);
-      finishSignup();
+      const result = await signup(email, 'password', password, destinationParam);
+      finishSignup(result);
     } catch (error) {
       showToast(error.error || 'Signup failed', 'error');
     } finally {
@@ -132,24 +153,39 @@ export default function Signup() {
       <div className={s.layout}>
         <PanelCarousel>
           <h2 className={s.panelTitle}>
-            {destination ? `Ready to explore ${destination.name}? ${destination.emoji}` : 'Join TravelZero'}
+            {destination
+              ? `Ready to explore ${destination.name}? ${destination.emoji}`
+              : viewThresholdMet ? 'Ready to book your London trip?' : 'Join TravelZero'}
           </h2>
           <p className={s.panelText}>
-            Sign up for a free account and get 10,000 loyalty points you can use towards your next
-            trip.
+            {showPersonalizedCTA
+              ? 'Sign up for a free account and get 10,000 loyalty points you can use towards your next trip.'
+              : 'Sign up for a free account to save your favorites and unlock personalized offers.'}
           </p>
         </PanelCarousel>
 
         <div className={s.formCol}>
           <div className={s.formInner}>
-            {/* anon conversion treatment: personalized session banner */}
-            {anonConversionTreatment && destination && (
+            {/* anon conversion treatment: personalized session banner, one
+                variant per signal — destination-click takes precedence if
+                both happen to be true. */}
+            {anonConversionTreatment && destination ? (
               <div className={s.sessionBanner}>
                 <span className={s.sessionBannerIcon}>👋</span>
                 <div>
                   <p className={s.sessionBannerTitle}>We saved your session</p>
                   <p className={s.sessionBannerText}>
                     You were browsing {destination.name}. Create a free account to book it and earn 10,000 welcome points.
+                  </p>
+                </div>
+              </div>
+            ) : viewThresholdMet && (
+              <div className={s.sessionBanner}>
+                <span className={s.sessionBannerIcon}>👋</span>
+                <div>
+                  <p className={s.sessionBannerTitle}>We saved your session</p>
+                  <p className={s.sessionBannerText}>
+                    You've been checking out London hotels and flights. Create a free account and unlock 10,000 loyalty points.
                   </p>
                 </div>
               </div>
@@ -160,14 +196,14 @@ export default function Signup() {
               <>
                 <div className={s.head}>
                   <h1 className={s.title}>
-                    {anonConversionTreatment && destination ? 'Claim your account' : 'Create account with passkey'}
+                    {showPersonalizedCTA ? 'Claim your account' : 'Create account with passkey'}
                   </h1>
                   <p className={s.subtitle}>Skip passwords — use Face ID or Touch ID to sign up in seconds</p>
                 </div>
                 <div className={s.form}>
                   <input type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
                   <Button onClick={handlePasskeySignup} disabled={loading} variant="brand" size="lg">
-                    {loading ? 'Setting up passkey…' : (anonConversionTreatment && destination ? 'Claim my 10,000 points →' : 'Continue with passkey')}
+                    {loading ? 'Setting up passkey…' : (showPersonalizedCTA ? 'Claim my 10,000 points →' : 'Continue with passkey')}
                   </Button>
                 </div>
                 <div className={s.divider} style={{ marginTop: '1rem' }}><span>or</span></div>
@@ -190,10 +226,10 @@ export default function Signup() {
               <>
                 <div className={s.head}>
                   <h1 className={s.title}>
-                    {anonConversionTreatment && destination ? 'Continue where you left off' : 'Create your account'}
+                    {showPersonalizedCTA ? 'Continue where you left off' : 'Create your account'}
                   </h1>
                   <p className={s.subtitle}>
-                    {anonConversionTreatment && destination
+                    {showPersonalizedCTA
                       ? 'Create a free account to save your browsing history and unlock member pricing.'
                       : 'Takes less than a minute'}
                   </p>
@@ -215,7 +251,7 @@ export default function Signup() {
                   <div className={s.form}>
                     <input type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
                     <Button onClick={handlePasskeySignup} disabled={loading} variant="brand" size="lg">
-                      {loading ? 'Setting up passkey…' : (anonConversionTreatment && destination ? 'Claim my 10,000 points →' : 'Continue with Passkey')}
+                      {loading ? 'Setting up passkey…' : (showPersonalizedCTA ? 'Claim my 10,000 points →' : 'Continue with Passkey')}
                     </Button>
                   </div>
                 )}
@@ -224,7 +260,7 @@ export default function Signup() {
                     <input type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} required />
                     <input type="password" placeholder="Password (min 8 characters)" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} required />
                     <Button type="submit" disabled={loading} variant="brand" size="lg">
-                      {loading ? 'Creating account…' : (anonConversionTreatment && destination ? 'Claim my 10,000 points →' : 'Create account')}
+                      {loading ? 'Creating account…' : (showPersonalizedCTA ? 'Claim my 10,000 points →' : 'Create account')}
                     </Button>
                   </form>
                 )}

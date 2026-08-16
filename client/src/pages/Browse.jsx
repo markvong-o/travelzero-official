@@ -4,12 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { DestinationCard } from '../components/DestinationCard';
+import { ActivityCard } from '../components/ActivityCard';
+import { FlightCard } from '../components/FlightCard';
+import { HotelCard } from '../components/HotelCard';
+import { TravelDetailsModal } from '../components/TravelDetailsModal';
 import { Button } from '@/components/ui/button';
+import { ACTIVITIES } from '../data/activities';
+import { FLIGHTS } from '../data/flights';
+import { HOTELS } from '../data/hotels';
 import s from './Browse.module.css';
 
 const DESTINATIONS = [
   {
     id: 'rome',
+    type: 'destination',
     name: 'Rome',
     region: 'Lazio',
     tagline: 'The Eternal City',
@@ -20,6 +28,7 @@ const DESTINATIONS = [
   },
   {
     id: 'amalfi',
+    type: 'destination',
     name: 'Amalfi Coast',
     region: 'Campania',
     tagline: 'Cliff-Hanging Views',
@@ -30,6 +39,7 @@ const DESTINATIONS = [
   },
   {
     id: 'tuscany',
+    type: 'destination',
     name: 'Tuscany',
     region: 'Toscana',
     tagline: 'Rolling Hills & Wine',
@@ -40,6 +50,7 @@ const DESTINATIONS = [
   },
   {
     id: 'como',
+    type: 'destination',
     name: 'Lake Como',
     region: 'Lombardy',
     tagline: 'Alpine Elegance',
@@ -50,6 +61,7 @@ const DESTINATIONS = [
   },
   {
     id: 'florence',
+    type: 'destination',
     name: 'Florence',
     region: 'Tuscany',
     tagline: 'Renaissance Masterpiece',
@@ -62,6 +74,7 @@ const DESTINATIONS = [
   },
   {
     id: 'milan',
+    type: 'destination',
     name: 'Milan',
     region: 'Lombardy',
     tagline: 'Fashion & Design',
@@ -74,6 +87,7 @@ const DESTINATIONS = [
   },
   {
     id: 'cinque-terre',
+    type: 'destination',
     name: 'Cinque Terre',
     region: 'Liguria',
     tagline: 'Cliffside Villages',
@@ -86,6 +100,7 @@ const DESTINATIONS = [
   },
   {
     id: 'capri',
+    type: 'destination',
     name: 'Capri',
     region: 'Campania',
     tagline: 'Luxury Island Escape',
@@ -95,6 +110,18 @@ const DESTINATIONS = [
       'Escape to this exclusive island paradise known for dramatic sea stacks, upscale shopping, and pristine blue waters.',
     imageUrl:
       'https://commons.wikimedia.org/wiki/Special:FilePath/Capri,%20Italy,%20Coast%20of%20Capri%20island.jpg?width=800',
+  },
+  {
+    id: 'london',
+    type: 'destination',
+    name: 'London',
+    region: 'Greater London',
+    tagline: 'Iconic Charm on the Thames',
+    climate: 'Mild & Unpredictable',
+    color: 'london',
+    description:
+      'From royal history to riverside markets, London blends centuries of tradition with a skyline that keeps reinventing itself. A city that rewards long weekends.',
+    imageUrl: 'https://images.unsplash.com/photo-1543832923-44667a44c804?w=1200&q=80',
   },
 ];
 
@@ -125,6 +152,13 @@ export default function Browse() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const touchStartX = useRef(null);
   const carouselRef = useRef(null);
+
+  const [viewingItem, setViewingItem] = useState(null);
+  const [viewingKind, setViewingKind] = useState(null);
+  const handleView = (item, kind) => {
+    setViewingItem(item);
+    setViewingKind(kind);
+  };
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 639px)');
@@ -322,7 +356,52 @@ export default function Browse() {
             ))}
           </div>
         )}
+
+        <h2 className={`font-display ${s.sectionTitle} ${s.activitiesTitle}`}>Activities You Might Love</h2>
+        <div className={s.activitiesGrid}>
+          {ACTIVITIES.map((activity) => (
+            <ActivityCard
+              key={activity.id}
+              activity={activity}
+              isFavorite={favoriteIds.has(activity.id)}
+              onFavoriteToggle={handleFavoriteToggle}
+            />
+          ))}
+        </div>
+
+        <h2 className={`font-display ${s.sectionTitle} ${s.activitiesTitle}`}>Flights</h2>
+        <div className={s.activitiesGrid}>
+          {FLIGHTS.map((flight) => (
+            <FlightCard
+              key={flight.id}
+              flight={flight}
+              isFavorite={favoriteIds.has(flight.id)}
+              onFavoriteToggle={handleFavoriteToggle}
+              onView={(item) => handleView(item, 'flight')}
+            />
+          ))}
+        </div>
+
+        <h2 className={`font-display ${s.sectionTitle} ${s.activitiesTitle}`}>Hotels</h2>
+        <div className={s.activitiesGrid}>
+          {HOTELS.map((hotel) => (
+            <HotelCard
+              key={hotel.id}
+              hotel={hotel}
+              isFavorite={favoriteIds.has(hotel.id)}
+              onFavoriteToggle={handleFavoriteToggle}
+              onView={(item) => handleView(item, 'hotel')}
+            />
+          ))}
+        </div>
       </main>
+
+      <TravelDetailsModal
+        item={viewingItem}
+        kind={viewingKind}
+        open={!!viewingItem}
+        onOpenChange={(open) => { if (!open) setViewingItem(null); }}
+      />
     </div>
   );
 }

@@ -47,6 +47,18 @@
   color: var(--muted-foreground);
 }
 
+.favGroup + .favGroup {
+  margin-top: 1.5rem;
+}
+.favGroupTitle {
+  margin-bottom: 0.625rem;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
 .favGrid {
   display: grid;
   gap: 0.75rem;

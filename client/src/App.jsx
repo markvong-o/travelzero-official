@@ -12,7 +12,9 @@ import "@auth0/universal-components-react/styles";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ExperimentProvider } from "./context/ExperimentContext";
+import { BannerProvider } from "./context/BannerContext";
 import { ToastContainer } from "./components/Toast";
+import { LoyaltyBanner } from "./components/LoyaltyBanner";
 import PublicLayout from "./layouts/PublicLayout";
 import AppLayout from "./layouts/AppLayout";
 import FocusedLayout from "./layouts/FocusedLayout";
@@ -35,7 +37,9 @@ function AppRoutes() {
     <ExperimentProvider>
       <AuthProvider>
         <ToastProvider>
+        <BannerProvider>
           <div className="app">
+            <LoyaltyBanner />
             <Routes>
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Browse />} />
@@ -84,6 +88,7 @@ function AppRoutes() {
             </Routes>
             <ToastContainer />
           </div>
+        </BannerProvider>
         </ToastProvider>
       </AuthProvider>
     </ExperimentProvider>

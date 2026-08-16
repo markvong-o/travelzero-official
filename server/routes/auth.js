@@ -85,7 +85,7 @@ router.post('/anonymous-token', async (req, res) => {
 });
 
 router.post('/signup', async (req, res) => {
-  const { method, email, password, sessionId, favorites, syncOnly } = req.body;
+  const { method, email, password, sessionId, favorites, syncOnly, destination } = req.body;
 
   if (!email || !method) {
     return res.status(400).json({ error: 'Missing email or method' });
@@ -125,8 +125,17 @@ router.post('/signup', async (req, res) => {
     store.migrateFavorites(sessionId, user.id);
   }
 
-  // Grant loyalty points
-  user.loyaltyPoints = 10000;
+  // Grant loyalty points — conditional on demonstrated intent, not universal.
+  // Two independent signals qualify: (1) arrived from a single destination
+  // click (trusted client-side only — there's no server-side tracking for
+  // this pre-existing signal), or (2) crossed the view-count threshold for a
+  // destination while browsing anonymously, which IS server-authoritative
+  // (store.sessions[sessionId].viewCounts, incremented by
+  // POST /api/session/:id/view) — so a spoofed client claim without the real
+  // tracked views behind it does not qualify.
+  const viewThresholdMet = Boolean(sessionId) && Object.values(store.sessions[sessionId]?.viewCounts ?? {}).some((count) => count >= 3);
+  const bonusEligible = Boolean(destination) || viewThresholdMet;
+  user.loyaltyPoints = bonusEligible ? 10000 : 0;
 
   // Record signup event for experiment tracking
   // Determine bucket: 50/50 split between passkey and password
@@ -160,7 +169,9 @@ router.post('/signup', async (req, res) => {
     ...(method === 'passkey' && {
       passkey: { credentialType: 'public-key', syncedToPlatform: true, rpId: 'travelzero.auth0.com' },
     }),
-    message: 'Sign up successful! You have been granted 10,000 loyalty points.',
+    message: bonusEligible
+      ? 'Sign up successful! You have been granted 10,000 loyalty points.'
+      : 'Sign up successful!',
   });
 });
 

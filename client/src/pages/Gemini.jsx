@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, BadgeCheck, CheckCircle2, Clock, CreditCard,
-  Gift, Hotel, Loader2, Lock, Plane, Sailboat, Send,
+  Gift, Heart, Hotel, Loader2, Lock, Plane, Sailboat, Send,
   ShieldCheck, Sparkles, Sun, Utensils, Wine,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import api from '../api.js';
+import { ACTIVITIES } from '../data/activities';
 import s from './Gemini.module.css';
+
+const ACTIVITY_ICONS = { sailboat: Sailboat, utensils: Utensils, wine: Wine };
 
 // This page simulates a *separate, external* app (Google Gemini) that has been
 // delegated permission to act on TravelZero on the user's behalf. It intentionally
@@ -95,34 +98,7 @@ function WeatherPanel() {
   );
 }
 
-const ADD_ONS = [
-  {
-    id: 'thames-cruise',
-    name: 'Thames Sunset Cruise',
-    desc: 'A sunset cruise along the Thames — ideal for a warm evening.',
-    cost: 230,
-    Icon: Sailboat,
-    partner: 'Thames Cruises Ltd',
-  },
-  {
-    id: 'rooftop-dinner',
-    name: 'Rooftop Terrace Dinner — Sky Garden',
-    desc: 'Panoramic views, warm evening air, 35 floors up.',
-    cost: 85,
-    Icon: Utensils,
-    partner: null,
-  },
-  {
-    id: 'kent-vineyard',
-    name: 'Kent Vineyard Tour',
-    desc: "A day in Kent's wine country — outdoor, countryside, heatwave-perfect.",
-    cost: 95,
-    Icon: Wine,
-    partner: null,
-  },
-];
-
-function RecsPanel() {
+function RecsPanel({ favoriteIds, onFavoriteToggle }) {
   return (
     <div className={s.panel}>
       <div className={s.panelHead}>
@@ -131,19 +107,31 @@ function RecsPanel() {
       </div>
       <div className={s.panelBody}>
         <div className={s.recList}>
-          {ADD_ONS.map((a) => (
-            <div key={a.id} className={s.recRow}>
-              <span className={s.recIconWrap}>
-                <a.Icon size={14} />
-              </span>
-              <div className={s.recInfo}>
-                <span className={s.recName}>{a.name}</span>
-                {a.partner && <span className={s.recPartner}>via {a.partner}</span>}
-                <span className={s.recDesc}>{a.desc}</span>
+          {ACTIVITIES.map((a) => {
+            const Icon = ACTIVITY_ICONS[a.icon];
+            const isFavorite = favoriteIds?.has(a.id);
+            return (
+              <div key={a.id} className={s.recRow}>
+                <span className={s.recIconWrap}>
+                  <Icon size={14} />
+                </span>
+                <div className={s.recInfo}>
+                  <span className={s.recName}>{a.name}</span>
+                  {a.partner && <span className={s.recPartner}>via {a.partner}</span>}
+                  <span className={s.recDesc}>{a.desc}</span>
+                </div>
+                <span className={s.recCost}>${a.cost}</span>
+                <button
+                  type="button"
+                  className={cn(s.recFav, isFavorite && s.recFavOn)}
+                  onClick={() => onFavoriteToggle?.(a, !isFavorite)}
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Heart size={13} className={cn(isFavorite && s.recFavIconOn)} />
+                </button>
               </div>
-              <span className={s.recCost}>${a.cost}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -434,7 +422,16 @@ function mockLondonBooking(email) {
 }
 
 export default function Gemini() {
-  const { user, isAnonymous } = useAuth();
+  const { user, isAnonymous, addFavorite, removeFavorite } = useAuth();
+  const favoriteIds = new Set((user?.user_metadata?.favorites ?? []).map((f) => f.id));
+
+  const handleFavoriteToggle = async (activity, adding) => {
+    if (adding) {
+      await addFavorite(activity);
+    } else {
+      await removeFavorite(activity.id);
+    }
+  };
 
   const [messages, setMessages] = useState([
     {
@@ -628,7 +625,7 @@ export default function Gemini() {
       case 'weather':
         return <WeatherPanel />;
       case 'recs':
-        return <RecsPanel />;
+        return <RecsPanel favoriteIds={favoriteIds} onFavoriteToggle={handleFavoriteToggle} />;
       case 'birthday':
         return <BirthdayPanel />;
       case 'offer':

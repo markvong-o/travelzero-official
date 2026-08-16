@@ -5,10 +5,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        'login-id':        resolve(__dirname, 'screens/login-id.js'),
-        'signup-id':       resolve(__dirname, 'screens/signup-id.js'),
-        'login-password':  resolve(__dirname, 'screens/login-password.js'),
-        'signup-password': resolve(__dirname, 'screens/signup-password.js'),
+        'login-id':                  resolve(__dirname, 'screens/login-id.js'),
+        'signup-id':                 resolve(__dirname, 'screens/signup-id.js'),
+        'login-password':            resolve(__dirname, 'screens/login-password.js'),
+        'signup-password':           resolve(__dirname, 'screens/signup-password.js'),
+        'email-identifier-challenge': resolve(__dirname, 'screens/email-identifier-challenge.js'),
+        'passkey-enrollment':        resolve(__dirname, 'screens/passkey-enrollment.js'),
       },
       output: {
         format: 'es',

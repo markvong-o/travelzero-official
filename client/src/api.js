@@ -58,10 +58,10 @@ class APIClient {
   }
 
   // Auth endpoints
-  signup(email, method, password = null, sessionId = null, favorites = null, syncOnly = false) {
+  signup(email, method, password = null, sessionId = null, favorites = null, syncOnly = false, destination = null) {
     return this.request('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ email, method, password, sessionId, favorites, syncOnly }),
+      body: JSON.stringify({ email, method, password, sessionId, favorites, syncOnly, destination }),
     });
   }
 

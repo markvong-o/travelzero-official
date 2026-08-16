@@ -46,6 +46,35 @@ router.get('/:sessionId', (req, res) => {
     userId: session.userId,
     favorites: session.favorites,
     createdAt: session.createdAt,
+    viewCounts: session.viewCounts || {},
+  });
+});
+
+/**
+ * POST /api/session/:sessionId/view
+ * Increments the server-authoritative view count for a destination (e.g.
+ * 'london') on this session — powers the anonymous-conversion signup banner.
+ * Tracked here rather than trusted purely client-side so /signup can verify
+ * eligibility against real behavior instead of a client-asserted flag.
+ *
+ * Body: { destination: string }
+ */
+router.post('/:sessionId/view', (req, res) => {
+  const { sessionId } = req.params;
+  const { destination } = req.body;
+
+  if (!destination) {
+    return res.status(400).json({ error: 'Missing destination' });
+  }
+
+  const session = store.getOrCreateSession(sessionId);
+  if (!session.viewCounts) session.viewCounts = {};
+  session.viewCounts[destination] = (session.viewCounts[destination] || 0) + 1;
+
+  res.json({
+    sessionId: session.id,
+    destination,
+    count: session.viewCounts[destination],
   });
 });
 

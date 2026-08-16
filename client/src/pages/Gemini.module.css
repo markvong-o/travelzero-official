@@ -415,6 +415,21 @@
 .recPartner { font-size: 10px; color: #34d399; }
 .recDesc    { font-size: var(--font-size-xs); color: #9aa0a6; }
 .recCost    { flex-shrink: 0; font-size: var(--font-size-sm); font-weight: 500; color: #e3e3e3; }
+.recFav {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-full);
+  background: none;
+  color: #5f6368;
+  transition: color 0.15s, background 0.15s;
+}
+.recFav:hover { background: #28292a; color: #9aa0a6; }
+.recFavOn { color: #ef4444; }
+.recFavIconOn { fill: currentColor; }
 
 /* ── Birthday panel ──────────────────────────────────────────────────────── */
 .birthdayRow {

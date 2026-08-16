@@ -1,0 +1,61 @@
+.banner {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--gradient-brand);
+  color: #fff;
+}
+
+.inner {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.text {
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+.text strong {
+  font-weight: 700;
+}
+
+.claim {
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--primary);
+  background: #fff;
+  border-radius: var(--radius-full);
+  transition: opacity 0.15s;
+}
+.claim:hover {
+  opacity: 0.9;
+}
+
+.dismiss {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.85);
+  transition: background 0.15s;
+}
+.dismiss:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

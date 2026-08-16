@@ -26,7 +26,7 @@ const SLIDES = [
   { src: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1920&q=80', label: 'Lake Como', caption: 'Alpine elegance on Europe\'s deepest lake' },
 ];
 
-let screen, ctx, clientId, isTravelZero, experiment, isPasskeyFirst, appTheme;
+let screen, ctx, clientId, isTravelZero, experiment, isPasswordless, appTheme;
 
 try {
   screen = new SignupId();
@@ -34,7 +34,7 @@ try {
   clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
   experiment = ctx.experiment;
-  isPasskeyFirst = isTravelZero && experiment ? !experiment.is_control : false;
+  isPasswordless = isTravelZero && experiment ? !experiment.is_control : false;
   appTheme = getTheme(clientId);
 } catch (err) {
   console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
@@ -44,7 +44,7 @@ injectStyles(isTravelZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
-  ? renderTravelZero(isPasskeyFirst, ctx)
+  ? renderTravelZero(isPasswordless, ctx)
   : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
 wireHandlers(screen);
@@ -52,19 +52,18 @@ if (isTravelZero) initCarousel();
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
 
-function renderTravelZero(passkeyFirst, ctx) {
+function renderTravelZero(passwordless, ctx) {
   const loginUrl = ctx.screen?.links?.login ?? '#';
-  const variantClass = passkeyFirst ? 'tz-layout--passkey' : 'tz-layout--password';
   return `
-    <div class="tz-layout ${variantClass}">
+    <div class="tz-layout">
       <div class="tz-panel">
         <div class="tz-card">
           <div class="tz-brand">
             <img src="${TZ_LOGO}" class="tz-logo" alt="" />
             <span class="tz-brand-name">TravelZero</span>
-            ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passkey-first' : 'Password-first'}</span>` : ''}
+            ${experiment ? `<span class="tz-exp-badge">${passwordless ? 'Passwordless' : 'Password'}</span>` : ''}
           </div>
-          ${passkeyFirst ? renderPasskeyFirst() : renderPasswordFirst()}
+          ${passwordless ? renderPasswordless() : renderPassword()}
           <p class="tz-alt">Already have an account? <a href="${loginUrl}">Sign in</a></p>
         </div>
       </div>
@@ -73,39 +72,29 @@ function renderTravelZero(passkeyFirst, ctx) {
   `;
 }
 
-function renderPasskeyFirst() {
+function renderPasswordless() {
   return `
     <div class="tz-head">
-      <h1>Create account with passkey</h1>
-      <p>Skip passwords — use Face ID or Touch ID in under a second</p>
+      <h1>Create your account</h1>
+      <p>No password needed — we'll verify your email and set up a passkey</p>
     </div>
-    <form id="passkey-signup-form" class="tz-form" novalidate>
-      <input type="email" name="username" id="username-passkey" placeholder="your@email.com" autocomplete="username" required />
-      <button type="submit" class="tz-btn-primary">${iconKey()} Continue with passkey</button>
-    </form>
-    <div class="tz-divider"><span>or</span></div>
-    <button type="button" class="tz-btn-ghost" id="password-toggle">Sign up with email instead →</button>
-    <form id="password-signup-form" class="tz-form tz-hidden" novalidate>
-      <input type="email" name="username" id="username-password" placeholder="your@email.com" autocomplete="email" required />
-      <button type="submit" class="tz-btn-secondary">Continue with email</button>
+    <form id="email-form" class="tz-form" novalidate>
+      <input type="email" id="email-input" placeholder="your@email.com" autocomplete="email" required />
+      <button type="submit" class="tz-btn-primary">Continue</button>
     </form>
   `;
 }
 
-function renderPasswordFirst() {
-  // signup-id only collects the identifier — password is captured on the
-  // subsequent signup-password screen. Both variants submit { username } only.
+function renderPassword() {
   return `
     <div class="tz-head">
       <h1>Create your account</h1>
       <p>Takes less than a minute</p>
     </div>
-    <form id="password-signup-form" class="tz-form" novalidate>
-      <input type="email" name="username" id="username-main" placeholder="your@email.com" autocomplete="email" required />
-      <button type="submit" class="tz-btn-primary">Continue with email</button>
+    <form id="email-form" class="tz-form" novalidate>
+      <input type="email" id="email-input" placeholder="your@email.com" autocomplete="email" required />
+      <button type="submit" class="tz-btn-primary">Continue</button>
     </form>
-    <div class="tz-divider"><span>or</span></div>
-    <button type="button" class="tz-btn-ghost" id="passkey-option">${iconKey()} Sign up with passkey instead</button>
   `;
 }
 
@@ -192,41 +181,27 @@ function renderBranded(theme, ctx) {
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
 function wireHandlers(screen) {
-  // TravelZero passkey-first: primary passkey form. SignupOptions requires the
-  // collected identifier under its typed key (email/username/phone) rather than
-  // a generic "username" like login-id — sending { username } here is what
-  // produced "missing parameter(s): email".
-  bind('passkey-signup-form', 'submit', async (e) => {
+  // signup-id only collects the identifier — the next screen depends on the
+  // variant (passwordless: email-identifier-challenge; password: signup-password).
+  // SignupOptions requires the identifier under its typed key (email/username/phone)
+  // rather than a generic field, so identifierParams() reads the transaction's
+  // actual requiredIdentifiers instead of hardcoding.
+  bind('email-form', 'submit', async (e) => {
     e.preventDefault();
-    await submit(screen, { email: val('username-passkey') });
+    await submit(screen, identifierParams(screen, val('email-input')));
   });
+}
 
-  // TravelZero passkey-first: password fallback toggle
-  const passwordToggle = document.getElementById('password-toggle');
-  const passwordSignupForm = document.getElementById('password-signup-form');
-  const passkeySignupForm = document.getElementById('passkey-signup-form');
-  if (passwordToggle && passwordSignupForm) {
-    passwordToggle.addEventListener('click', () => {
-      const isHidden = passwordSignupForm.classList.toggle('tz-hidden');
-      passwordToggle.textContent = isHidden
-        ? 'Sign up with email + password →'
-        : '← Back to passkey';
-    });
-  }
-
-  // signup-id only collects the identifier — password comes on the next screen
-  if (passwordSignupForm) {
-    passwordSignupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = val('username-main') || val('username-password');
-      await submit(screen, { email });
-    });
-  }
-
-  // TravelZero password-first: passkey alternative
-  bind('passkey-option', 'click', async () => {
-    await submit(screen, { email: val('username-main') ?? '' });
-  });
+// Reads the transaction's actual requiredIdentifiers/optionalIdentifiers
+// (email/username/phone) instead of hardcoding one key — the required key
+// can differ between the password path and the passkey-enrollment path on
+// the same tenant, even though this UI only ever collects one text value.
+function identifierParams(screen, value) {
+  const required = screen?.transaction?.requiredIdentifiers ?? [];
+  const optional = screen?.transaction?.optionalIdentifiers ?? [];
+  const types = [...new Set([...required, ...optional])].filter((t) => t !== 'phone');
+  if (types.length === 0) return { email: value };
+  return Object.fromEntries(types.map((t) => [t, value]));
 }
 
 function bind(id, event, handler) {

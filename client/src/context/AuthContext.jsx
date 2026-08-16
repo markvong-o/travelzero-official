@@ -10,10 +10,13 @@ import {
   setAnonFavorites,
   clearAnonFavorites,
 } from '../lib/anonymous-sessions';
+import { meetsViewThreshold, clearViewTracking } from '../lib/view-tracking';
 import { useExperimentContext } from './ExperimentContext';
 
 // Custom ID token claim namespace — must match assign-experiment-variant.js Action.
 const EXPERIMENT_CLAIM = 'https://travelzero.demo/experiments';
+// Must match LOYALTY_CLAIM in auth0-actions/merge-anonymous-session.js.
+const LOYALTY_CLAIM = 'https://travelzero.demo/loyalty_points';
 
 export const AuthContext = createContext();
 
@@ -55,11 +58,12 @@ function useMockAuth() {
     initSession();
   }, []);
 
-  const signup = async (email, method, password = null) => {
+  const signup = async (email, method, password = null, destination = null) => {
     const favorites = getAnonFavorites();
-    const response = await api.signup(email, method, password, sessionId, favorites);
+    const response = await api.signup(email, method, password, sessionId, favorites, false, destination);
     api.setToken(response.token);
     clearAnonFavorites();
+    clearViewTracking();
     setAnonFavoritesState([]);
     setUser({
       userId: response.userId,
@@ -83,6 +87,7 @@ function useMockAuth() {
   const logout = () => {
     api.clearToken();
     clearAnonFavorites();
+    clearViewTracking();
     setAnonFavoritesState([]);
     setUser(null);
     setIsAnonymous(true);
@@ -186,6 +191,7 @@ function useRealAuth0() {
     }
 
     clearAnonFavorites();
+    clearViewTracking();
 
     if (anonSessionToken) {
       destroyAnonymousSession(domain, clientId);
@@ -215,7 +221,7 @@ function useRealAuth0() {
       ? {
           userId: auth0User.sub,
           email: auth0User.email,
-          loyaltyPoints: 0,
+          loyaltyPoints: auth0User[LOYALTY_CLAIM] ?? 0,
           user_metadata: { favorites: localFavorites },
         }
       : null,
@@ -227,9 +233,16 @@ function useRealAuth0() {
   // can write them to the new user's profile.
   const signup = async (email, _method, _password, metadata = {}) => {
     const favorites = getAnonFavorites();
+    // bonusEligible mirrors the same two-signal check server/routes/auth.js
+    // uses in mock mode — either signal qualifies for the loyalty-points
+    // grant. The pre-user-registration Action reads this from anonymous
+    // session metadata at the exact conversion moment (see
+    // auth0-actions/merge-anonymous-session.js).
+    const bonusEligible = Boolean(metadata.destination) || meetsViewThreshold('london');
     const sessionMetadata = {
       ...(metadata.destination ? { destination: metadata.destination } : {}),
       ...(favorites.length > 0 ? { favorites: JSON.stringify(favorites) } : {}),
+      ...(bonusEligible ? { bonusEligible: true } : {}),
     };
     const freshToken = await createAnonymousSession(
       domain, clientId, audience, sessionMetadata
@@ -281,6 +294,7 @@ function useRealAuth0() {
 
   const logout = () => {
     clearAnonFavorites();
+    clearViewTracking();
     setLocalFavorites([]);
     api.clearToken(); // remove stale mock token so the Dashboard fast-path is used on next login
     destroyAnonymousSession(domain, clientId);
