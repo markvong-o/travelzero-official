@@ -65,7 +65,7 @@ function renderTravelZero(passkeyFirst, ctx) {
             <span class="tz-brand-name">TravelZero</span>
             ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passkey-first' : 'Password-first'}</span>` : ''}
           </div>
-          ${passkeyFirst ? renderPasskeyFirst(ctx) : renderPasswordFirst(ctx)}
+          ${passkeyFirst ? renderPasskeyFirst(ctx) : renderPasswordFirst()}
           <p class="tz-alt">Don't have an account? <a href="${signupUrl}">Sign up</a></p>
         </div>
       </div>
@@ -114,14 +114,18 @@ function renderPasskeyFirst() {
     <button type="button" class="tz-btn-ghost" id="password-toggle">Use password instead →</button>
     <form id="password-fallback-form" class="tz-form tz-hidden" novalidate>
       <input type="email" name="username" id="username-password" placeholder="your@email.com" autocomplete="email" required />
-      <input type="password" name="password" id="password-password" placeholder="Password" autocomplete="current-password" required />
-      <button type="submit" class="tz-btn-secondary">Sign in</button>
+      <button type="submit" class="tz-btn-secondary">Continue with email</button>
     </form>
   `;
 }
 
-function renderPasswordFirst(ctx) {
-  const resetUrl = ctx?.screen?.links?.reset_password ?? '#';
+function renderPasswordFirst() {
+  // Identifier-only, by design: Auth0's Identifier-First architecture always
+  // routes password entry to a separate screen (login-password), which has no
+  // supported way to merge into this one — Auth0 staff have confirmed this on
+  // their community forum. Collecting a password here would just be silently
+  // dropped and the user would be asked for it again. See login-password.js
+  // for the actual password entry, now built as its own branded ACUL screen.
   return `
     <div class="tz-head">
       <h1>Welcome back</h1>
@@ -129,9 +133,7 @@ function renderPasswordFirst(ctx) {
     </div>
     <form id="login-form" class="tz-form" novalidate>
       <input type="email" name="username" id="username-main" placeholder="your@email.com" autocomplete="email" required />
-      <input type="password" name="password" id="password-main" placeholder="Password" autocomplete="current-password" required />
-      <a href="${resetUrl}" class="tz-forgot">Forgot password?</a>
-      <button type="submit" class="tz-btn-primary">Sign in</button>
+      <button type="submit" class="tz-btn-primary">Continue</button>
     </form>
     <div class="tz-divider"><span>or</span></div>
     <button type="button" class="tz-btn-ghost" id="passkey-option">
@@ -196,7 +198,7 @@ function wireHandlers(screen) {
     });
     bind('password-fallback-form', 'submit', async (e) => {
       e.preventDefault();
-      await submit(screen, { username: val('username-password'), password: val('password-password') });
+      await submit(screen, { username: val('username-password') });
     });
   }
 
@@ -453,8 +455,6 @@ function injectStyles(isTravelZero, theme) {
     .tz-head h1 { font-size: 1.75rem; font-weight: 800; color: #1A1A2E; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 0.375rem; }
     .tz-head p { font-size: 0.9rem; color: #6B7280; line-height: 1.5; }
     .tz-form { display: flex; flex-direction: column; gap: 0.625rem; }
-    .tz-forgot { align-self: flex-end; margin-top: -0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--tz-accent-solid); text-decoration: none; }
-    .tz-forgot:hover { color: var(--tz-accent-hover); }
     .tz-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.125rem 0; color: #9CA3AF; font-size: 0.8125rem; }
     .tz-divider::before, .tz-divider::after { content: ''; flex: 1; height: 1px; background: rgba(var(--tz-accent-tint), 0.12); }
     .tz-alt { margin-top: 1.75rem; font-size: 0.875rem; color: #6B7280; text-align: center; }

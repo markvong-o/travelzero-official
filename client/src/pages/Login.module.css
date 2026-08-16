@@ -184,32 +184,6 @@
   color: var(--muted-foreground);
 }
 
-.variantPicker {
-  display: flex;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-}
-.variantPickerInner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  max-width: 24rem;
-  text-align: center;
-}
-.variantPickerInner .subtitle {
-  margin-bottom: 0.75rem;
-}
-.variantBtn {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
 @media (min-width: 1024px) {
   .layout { grid-template-columns: minmax(0, 1fr) 40%; }
 }

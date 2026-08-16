@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Fingerprint, KeyRound, Mail, ShieldCheck, Star, Plane, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +29,7 @@ function GoogleIcon() {
 }
 
 export default function Login() {
-  const { login, loginWithVariant } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { prompt, promptProps } = useWebAuthnPrompt();
@@ -59,31 +59,23 @@ export default function Login() {
 
   const returnTo = searchParams.get('returnTo') || '/dashboard';
   // Real Auth0 mode redirects to Universal Login and never reads these
-  // form fields, so skip rendering the form entirely. Instead of redirecting
-  // immediately, offer explicit variant picks — this is the front door for
-  // showing the ACUL experiment (passkey-first vs password-first) live.
+  // form fields, so skip rendering the form entirely and trigger the
+  // redirect immediately. The ACUL screen's variant (passkey-first vs
+  // password-first) is decided server-side by the exp_device_segmentation
+  // segment, which matches on the real request's browser/OS — Chrome on
+  // macOS routes to passkey-first, everything else (e.g. Safari) falls
+  // back to password-first. No forced override needed here.
   const authRedirect = isAuth0Configured();
 
+  useEffect(() => {
+    if (authRedirect) {
+      login(returnTo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authRedirect]);
+
   if (authRedirect) {
-    return (
-      <div className={s.variantPicker}>
-        <div className={s.variantPickerInner}>
-          <h1 className={s.title}>Sign in to TravelZero</h1>
-          <p className={s.subtitle}>Choose an experience to preview the live ACUL experiment</p>
-
-          <Button onClick={() => loginWithVariant('passkey')} variant="brand" size="lg" className={s.variantBtn}>
-            <Fingerprint size={16} /> Passkey-first experience
-          </Button>
-          <Button onClick={() => loginWithVariant('password')} variant="outline" size="lg" className={s.variantBtn}>
-            <KeyRound size={16} /> Password-first experience
-          </Button>
-
-          <button type="button" className={s.fallbackLink} onClick={() => login(returnTo)}>
-            Or sign in normally (live traffic allocation) →
-          </button>
-        </div>
-      </div>
-    );
+    return <div className={s.redirect}>Redirecting to sign in…</div>;
   }
 
   const handlePasskeyLogin = async () => {
