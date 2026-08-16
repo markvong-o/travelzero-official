@@ -138,6 +138,7 @@ export default function Browse() {
   const handleFavoriteToggle = async (destination, adding) => {
     try {
       if (adding) {
+        console.log("test")
         await addFavorite(destination);
         showToast(`${destination.name} saved to favorites`, 'success');
       } else {

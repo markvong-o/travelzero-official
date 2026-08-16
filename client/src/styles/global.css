@@ -142,3 +142,8 @@ h4 { font-size: var(--font-size-xl); }
   min-height: 100vh;
   background-color: var(--background);
 }
+
+/* Hide the implicit Toaster from sonner's toast() calls; we use our custom <Toaster /> instead */
+[data-sonner-toast][data-x-position="right"] {
+  display: none !important;
+}

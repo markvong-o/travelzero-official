@@ -54,9 +54,11 @@ function renderTravelZero(ctx) {
               <div class="tz-badge tz-badge-org">ORGANIZATION</div>
               <h1 class="tz-head">Select Your Organization</h1>
               <p class="tz-subhead">Choose which organization you'd like to access</p>
+              <input type="text" id="org-search" class="tz-org-search" placeholder="Search organizations..." />
               <div id="org-list" class="tz-org-list">
                 ${orgListHtml}
               </div>
+              <button id="skip-org-btn" class="tz-skip-btn">Skip for now</button>
             </div>
           </div>
         </div>
@@ -84,9 +86,11 @@ function renderWorkZero(ctx) {
             <h1>Select Your Organization</h1>
             <p>Choose which organization to access</p>
           </div>
+          <input type="text" id="org-search" class="wz-org-search" placeholder="Search organizations..." />
           <div id="org-list" class="wz-org-list">
             ${orgListHtml}
           </div>
+          <button id="skip-org-btn" class="wz-skip-btn">Skip for now</button>
         </div>
       </div>
     </div>
@@ -108,9 +112,11 @@ function renderBranded(theme, ctx) {
       <div class="app-panel" style="align-items: ${panelAlign};">
         <div class="app-card">
           <h2 style="color: ${theme.text}; margin-bottom: 1rem;">Select Your Organization</h2>
+          <input type="text" id="org-search" class="branded-org-search" placeholder="Search organizations..." style="color: ${theme.text};" />
           <div id="org-list" class="org-list">
             ${orgListHtml}
           </div>
+          <button id="skip-org-btn" class="branded-skip-btn" style="color: ${theme.text};">Skip for now</button>
         </div>
       </div>
     </div>
@@ -287,6 +293,66 @@ function injectStyles(isTravelZero, isWorkZero, theme) {
       border-color: #D1D5DB;
       background: #F9FAFB;
     }
+
+    /* Search input and skip button */
+    .tz-org-search, .wz-org-search, .branded-org-search {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      border: 1.5px solid rgba(var(--tz-accent-tint), 0.15);
+      border-radius: 8px;
+      font-family: inherit;
+    }
+
+    .tz-org-search::placeholder, .wz-org-search::placeholder, .branded-org-search::placeholder {
+      color: #9CA3AF;
+    }
+
+    .tz-skip-btn, .branded-skip-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: transparent;
+      border: none;
+      color: var(--tz-accent-1);
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      transition: opacity 0.2s ease;
+    }
+
+    .tz-skip-btn:hover, .branded-skip-btn:hover {
+      opacity: 0.7;
+    }
+
+    .wz-org-search {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      border: 1px solid #DDD;
+      border-radius: 6px;
+      background: white;
+      font-family: inherit;
+    }
+
+    .wz-skip-btn {
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      border: none;
+      color: var(--wz-primary-600);
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      transition: opacity 0.2s ease;
+    }
+
+    .wz-skip-btn:hover {
+      opacity: 0.7;
+    }
   `;
 
   style.textContent += getWorkZeroCss(isTravelZero, isWorkZero, theme);
@@ -296,22 +362,46 @@ function injectStyles(isTravelZero, isWorkZero, theme) {
 
 function wireHandlers(isTravelZero, isWorkZero, screen) {
   const orgList = document.getElementById('org-list');
-  if (!orgList) return;
+  const orgSearch = document.getElementById('org-search');
+  const skipBtn = document.getElementById('skip-org-btn');
 
-  orgList.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-org-index]');
-    if (!btn) return;
+  if (orgList) {
+    orgList.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-org-index]');
+      if (!btn) return;
 
-    const orgs = ctx?.screen?.data?.organizations ?? [];
-    const idx = parseInt(btn.dataset.orgIndex, 10);
-    const org = orgs[idx];
+      const orgs = ctx?.screen?.data?.organizations ?? [];
+      const idx = parseInt(btn.dataset.orgIndex, 10);
+      const org = orgs[idx];
 
-    if (org?.name) {
-      try {
-        await screen.continueWithOrganizationName({ organizationName: org.name });
-      } catch (err) {
-        console.error('Failed to select organization:', err);
+      if (org?.name) {
+        try {
+          await screen.continueWithOrganizationName({ organizationName: org.name });
+        } catch (err) {
+          console.error('Failed to select organization:', err);
+        }
       }
-    }
-  });
+    });
+  }
+
+  if (orgSearch) {
+    orgSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const buttons = document.querySelectorAll('button[data-org-index]');
+      buttons.forEach((btn) => {
+        const text = btn.textContent.toLowerCase();
+        btn.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
+    });
+  }
+
+  if (skipBtn) {
+    skipBtn.addEventListener('click', async () => {
+      try {
+        await screen.returnToPrevious?.();
+      } catch (err) {
+        console.error('Failed to skip organization selection:', err);
+      }
+    });
+  }
 }

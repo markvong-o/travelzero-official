@@ -1,20 +1,12 @@
 import React from 'react';
 import { Heart, Building2, DollarSign } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import { cn, destinationGradient } from '@/lib/utils';
 import s from './HotelCard.module.css';
 
 export function HotelCard({ hotel, isFavorite = false, onFavoriteToggle, onView }) {
-  const { isAnonymous } = useAuth();
-  const { showToast } = useToast();
-
   const handleFavorite = (e) => {
     e.stopPropagation();
     onFavoriteToggle?.(hotel, !isFavorite);
-    if (isAnonymous && !isFavorite) {
-      showToast(`${hotel.name} saved — sign up to keep your favorites`, 'info');
-    }
   };
 
   return (

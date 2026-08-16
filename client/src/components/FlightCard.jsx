@@ -1,20 +1,12 @@
 import React from 'react';
 import { Heart, Plane, DollarSign } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import { cn, destinationGradient } from '@/lib/utils';
 import s from './FlightCard.module.css';
 
 export function FlightCard({ flight, isFavorite = false, onFavoriteToggle, onView }) {
-  const { isAnonymous } = useAuth();
-  const { showToast } = useToast();
-
   const handleFavorite = (e) => {
     e.stopPropagation();
     onFavoriteToggle?.(flight, !isFavorite);
-    if (isAnonymous && !isFavorite) {
-      showToast(`${flight.airline} ${flight.flightNumber} saved — sign up to keep your favorites`, 'info');
-    }
   };
 
   return (

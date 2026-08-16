@@ -1,19 +1,11 @@
 import React from 'react';
 import { Heart, DollarSign, Handshake } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import { cn, destinationGradient } from '@/lib/utils';
 import s from './ActivityCard.module.css';
 
 export function ActivityCard({ activity, isFavorite = false, onFavoriteToggle }) {
-  const { isAnonymous } = useAuth();
-  const { showToast } = useToast();
-
   const handleFavorite = () => {
     onFavoriteToggle?.(activity, !isFavorite);
-    if (isAnonymous && !isFavorite) {
-      showToast(`${activity.name} saved — sign up to keep your favorites`, 'info');
-    }
   };
 
   return (

@@ -52,16 +52,23 @@ const authenticateUser = (req) => {
  * touching the client.
  */
 router.post('/anonymous-token', async (req, res) => {
+  console.log('[anonymous-token] Request received with body:', req.body);
+
   const domain = process.env.AUTH0_DOMAIN;
   const clientId = process.env.AUTH0_SPA_CLIENT_ID || process.env.AUTH0_CLIENT_ID;
 
+  console.log('[anonymous-token] domain:', domain, 'clientId:', clientId);
+
   if (!domain || !clientId) {
+    console.error('[anonymous-token] Auth0 not configured');
     return res.status(503).json({ error: 'Auth0 not configured' });
   }
 
   const { audience, metadata = {} } = req.body;
 
   try {
+    console.log('[anonymous-token] Calling Auth0 /anonymous/token with:', { clientId, audience, metadata });
+
     const auth0Res = await fetch(`https://${domain}/anonymous/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,12 +81,17 @@ router.post('/anonymous-token', async (req, res) => {
     });
 
     const data = await auth0Res.json();
+    console.log('[anonymous-token] Auth0 response status:', auth0Res.status, 'data:', data);
+
     if (!auth0Res.ok) {
+      console.error('[anonymous-token] Auth0 error:', data);
       return res.status(auth0Res.status).json({ error: data.error_description || data.error || 'Anonymous token failed' });
     }
 
+    console.log('[anonymous-token] Success! Returning session_token');
     res.json({ session_token: data.session_token });
   } catch (err) {
+    console.error('[anonymous-token] Exception:', err.message);
     res.status(502).json({ error: 'Failed to reach Auth0' });
   }
 });

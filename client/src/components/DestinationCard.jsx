@@ -1,20 +1,12 @@
 import React from 'react';
 import { Heart, MapPin, Thermometer } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import { Button } from '@/components/ui/button';
 import { cn, destinationGradient } from '@/lib/utils';
 import s from './DestinationCard.module.css';
 
 export function DestinationCard({ destination, onBook, isFavorite = false, onFavoriteToggle }) {
-  const { isAnonymous } = useAuth();
-  const { showToast } = useToast();
-
   const handleFavorite = () => {
     onFavoriteToggle?.(destination, !isFavorite);
-    if (isAnonymous && !isFavorite) {
-      showToast(`${destination.name} saved — sign up to keep your favorites`, 'info');
-    }
   };
 
   return (

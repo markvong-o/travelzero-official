@@ -9,6 +9,13 @@ import {
   getAnonFavorites,
   setAnonFavorites,
   clearAnonFavorites,
+  getAnonDestination,
+  setAnonDestination,
+  getAnonBonusEligible,
+  setAnonBonusEligible,
+  getAnonLoyaltyPoints,
+  setAnonLoyaltyPoints,
+  clearAllAnonData,
 } from '../lib/anonymous-sessions';
 import { meetsViewThreshold, clearViewTracking } from '../lib/view-tracking';
 import { useExperimentContext } from './ExperimentContext';
@@ -146,17 +153,9 @@ function useRealAuth0() {
   const { domain, clientId, audience } = getAuth0Config();
   const { setVariant } = useExperimentContext();
 
-  // Create an anonymous session on first load only if the user is not already
-  // authenticated. Auth0 anonymous sessions are pre-auth only — once the user
-  // has identified themselves the session is consumed. The next anon session is
-  // created by logout(), so there is never a gap for anonymous visitors.
-  useEffect(() => {
-    if (isLoading) return;
-    if (isAuthenticated) return;
-    if (!anonSessionToken) {
-      createAnonymousSession(domain, clientId, audience, {}).then(setAnonSessionToken);
-    }
-  }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Anonymous session is only created at signup time, not on page load.
+  // Pre-signup, we track data in sessionStorage: favorites, destination, bonusEligible, loyaltyPoints.
+  // No effect needed on mount.
 
   // When the user completes login: sync a mock server session so all Express
   // routes (Assistant, Gemini, Security, etc.) keep working without per-page
@@ -190,13 +189,8 @@ function useRealAuth0() {
       api.syncFavorites(auth0User.sub, merged).catch(() => {});
     }
 
-    clearAnonFavorites();
+    clearAllAnonData();
     clearViewTracking();
-
-    if (anonSessionToken) {
-      destroyAnonymousSession(domain, clientId);
-      setAnonSessionToken(null);
-    }
   }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Seed experiment variants from the custom ID token claim written by the
@@ -234,20 +228,27 @@ function useRealAuth0() {
   const signup = async (email, _method, _password, metadata = {}) => {
     const favorites = getAnonFavorites();
     // bonusEligible mirrors the same two-signal check server/routes/auth.js
-    // uses in mock mode — either signal qualifies for the loyalty-points
-    // grant. The pre-user-registration Action reads this from anonymous
-    // session metadata at the exact conversion moment (see
-    // auth0-actions/merge-anonymous-session.js).
+    // uses in mock mode — either signal qualifies for the loyalty-points grant.
     const bonusEligible = Boolean(metadata.destination) || meetsViewThreshold('london');
+
+    // Track in sessionStorage for later Action access
+    if (metadata.destination) setAnonDestination(metadata.destination);
+    if (bonusEligible) {
+      setAnonBonusEligible(true);
+      setAnonLoyaltyPoints(10000);
+    }
+
+    // Build metadata for the anonymous session
     const sessionMetadata = {
       ...(metadata.destination ? { destination: metadata.destination } : {}),
       ...(favorites.length > 0 ? { favorites: JSON.stringify(favorites) } : {}),
-      ...(bonusEligible ? { bonusEligible: true } : {}),
+      ...(bonusEligible ? { bonusEligible: 'true', loyaltyPoints: '10000' } : {}),
     };
+
+    // NOW create the anonymous session with all metadata at signup time
     const freshToken = await createAnonymousSession(
       domain, clientId, audience, sessionMetadata
     );
-    const token = freshToken ?? anonSessionToken;
     if (freshToken) setAnonSessionToken(freshToken);
 
     return loginWithRedirect({
@@ -255,7 +256,6 @@ function useRealAuth0() {
       authorizationParams: {
         screen_hint: 'signup',
         login_hint: email || undefined,
-        ...(token ? { 'Auth0-Anonymous-Session': token } : {}),
       },
     });
   };
@@ -272,33 +272,41 @@ function useRealAuth0() {
 
   const login = async (returnTo = '/dashboard') => {
     const favorites = getAnonFavorites();
-    let token = anonSessionToken;
-    // Bake current favorites into a fresh anon session so the post-login Action
-    // can read event.anonymous_session.metadata.favorites and merge them.
+    const destination = getAnonDestination();
+    const bonusEligible = getAnonBonusEligible();
+    const loyaltyPoints = getAnonLoyaltyPoints();
+
+    // localStorage backup: some browsers (Safari ITP, Firefox strict) clear
+    // sessionStorage on cross-origin redirects, which would lose the anon favorites.
     if (favorites.length > 0) {
-      // localStorage backup: some browsers (Safari ITP, Firefox strict) clear
-      // sessionStorage on cross-origin redirects, which would lose the anon favorites.
       localStorage.setItem('tz_pending_favorites', JSON.stringify(favorites));
-      const freshToken = await createAnonymousSession(domain, clientId, audience, {
-        favorites: JSON.stringify(favorites),
-      });
-      if (freshToken) { setAnonSessionToken(freshToken); token = freshToken; }
     }
+
+    // Build metadata from sessionStorage and create anonymous session at login time
+    const sessionMetadata = {
+      ...(destination ? { destination } : {}),
+      ...(favorites.length > 0 ? { favorites: JSON.stringify(favorites) } : {}),
+      ...(bonusEligible ? { bonusEligible: 'true', loyaltyPoints: String(loyaltyPoints) } : {}),
+    };
+
+    if (Object.keys(sessionMetadata).length > 0) {
+      const freshToken = await createAnonymousSession(
+        domain, clientId, audience, sessionMetadata
+      );
+      if (freshToken) setAnonSessionToken(freshToken);
+    }
+
     return loginWithRedirect({
       appState: { returnTo },
-      authorizationParams: {
-        ...(token ? { 'Auth0-Anonymous-Session': token } : {}),
-      },
     });
   };
 
   const logout = () => {
-    clearAnonFavorites();
+    clearAllAnonData();
     clearViewTracking();
     setLocalFavorites([]);
     api.clearToken(); // remove stale mock token so the Dashboard fast-path is used on next login
     destroyAnonymousSession(domain, clientId);
-    setAnonSessionToken(null);
     auth0Logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
@@ -307,7 +315,9 @@ function useRealAuth0() {
     // Pre-login: keep sessionStorage in sync for the anon→login carry-through.
     const base = isAuthenticated ? localFavorites : getAnonFavorites();
     const updated = [...base.filter(f => f.id !== destination.id), destination];
-    if (!isAuthenticated) setAnonFavorites(updated);
+    if (!isAuthenticated) {
+      setAnonFavorites(updated);
+    }
     setLocalFavorites(updated);
     if (isAuthenticated && auth0User?.sub) {
       api.syncFavorites(auth0User.sub, updated).catch(() => {});
@@ -317,7 +327,9 @@ function useRealAuth0() {
   const removeFavorite = async (id) => {
     const base = isAuthenticated ? localFavorites : getAnonFavorites();
     const updated = base.filter(f => f.id !== id);
-    if (!isAuthenticated) setAnonFavorites(updated);
+    if (!isAuthenticated) {
+      setAnonFavorites(updated);
+    }
     setLocalFavorites(updated);
     if (isAuthenticated && auth0User?.sub) {
       api.syncFavorites(auth0User.sub, updated).catch(() => {});

@@ -11,7 +11,7 @@ const TOAST_FNS = {
 };
 
 export function ToastProvider({ children }) {
-  const showToast = (message, type = 'info', duration = 3000) => {
+  const showToast = (message, type = 'info', duration = 15000) => {
     const fn = TOAST_FNS[type] || toast.message;
     return fn(message, { duration });
   };
