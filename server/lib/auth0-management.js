@@ -81,6 +81,18 @@ export async function getFeatureFlag(flagId) {
   return data;
 }
 
+// Fetches a single segment, including its match rules (the actual targeting
+// conditions — browser, platform, client_id, etc.) behind a segment-gated allocation.
+export async function getSegment(segmentId) {
+  const token = await getManagementToken();
+  const res = await fetch(`https://${process.env.AUTH0_DOMAIN}/api/v2/experimentation/segments/${segmentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || `Failed to fetch segment: ${res.status}`);
+  return data;
+}
+
 // Creates a real Auth0 user via POST /api/v2/users.
 // https://auth0.com/docs/api/management/v2/users/post-users
 export async function createManagementUser({ email, password, connection = 'Username-Password-Authentication' }) {

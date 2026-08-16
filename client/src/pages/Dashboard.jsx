@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Sparkles, Plane, CalendarPlus, X, Fingerprint } from 'lucide-react';
+import { Heart, Sparkles, Plane, CalendarPlus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useExperiment } from '../context/ExperimentContext';
 import { useWebAuthnPrompt, WebAuthnPrompt } from '../components/WebAuthnPrompt';
 import { PasskeySection } from '../components/PasskeySection';
 import { LoyaltyMeter } from '../components/LoyaltyMeter';
@@ -29,8 +28,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user: authUser, removeFavorite } = useAuth();
-  const { isTreatment: showEnrollmentNudge } = useExperiment('exp_passkey_enrollment');
-  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const securityCardRef = React.useRef(null);
   const { prompt, promptProps } = useWebAuthnPrompt();
   const [profile, setProfile] = useState(null);
@@ -129,37 +126,6 @@ export default function Dashboard() {
           </p>
         </div>
       </header>
-
-      {showEnrollmentNudge && !nudgeDismissed && (
-        <div className={s.nudge}>
-          <div className={s.nudgeIcon}><Fingerprint size={20} /></div>
-          <div className={s.nudgeBody}>
-            <p className={s.nudgeTitle}>Set up a passkey for faster sign-ins</p>
-            <p className={s.nudgeSub}>Skip passwords next time — use Face ID or Touch ID in under a second.</p>
-          </div>
-          <div className={s.nudgeActions}>
-            <button
-              type="button"
-              className={s.nudgeSetup}
-              onClick={async () => {
-                if (isAuth0Configured()) {
-                  setNudgeDismissed(true);
-                  securityCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                  await prompt('Use Face ID / Touch ID to enroll your passkey');
-                  showToast('Passkey enrolled successfully', 'success');
-                  setNudgeDismissed(true);
-                }
-              }}
-            >
-              Set up passkey
-            </button>
-            <button type="button" className={s.nudgeDismiss} onClick={() => setNudgeDismissed(true)}>
-              Maybe later
-            </button>
-          </div>
-        </div>
-      )}
 
       <LoyaltyMeter points={profile.loyaltyPoints} maxPoints={100000} />
 

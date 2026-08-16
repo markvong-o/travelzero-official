@@ -20,5 +20,14 @@ export default defineConfig({
       usePolling: true,
       interval: 300,
     },
+    // Only override HMR transport when fronted by Caddy on the custom
+    // domain — plain `npm run dev` on localhost:5173 needs this untouched.
+    ...(process.env.CADDY_HOST && {
+      hmr: {
+        host: process.env.CADDY_HOST,
+        protocol: 'wss',
+        clientPort: 443,
+      },
+    }),
   },
 });

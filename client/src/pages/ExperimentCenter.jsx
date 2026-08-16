@@ -58,7 +58,6 @@ const EXPERIMENTS = [
     significant: false,
     measurementOnly: true,
     auth0Wired: true,
-    aculDemo: true,
     previewPath: '/login',
     control: {
       label: 'OTP fallback cohort',
@@ -113,6 +112,13 @@ function IdRow({ label, id, onCopy, copied }) {
       </button>
     </div>
   );
+}
+
+// Shortens long opaque values (client IDs, etc.) for inline display in condition
+// chips while keeping both ends visible enough to eyeball a match.
+function truncateMid(value) {
+  const str = String(value);
+  return str.length > 16 ? `${str.slice(0, 6)}…${str.slice(-6)}` : str;
 }
 
 export default function ExperimentCenter() {
@@ -222,7 +228,12 @@ export default function ExperimentCenter() {
         One active experiment per flow; results update on a batch cadence.
       </p>
 
-      {/* ── Experiment list ── */}
+      {/* ── Experiment list — mock mode only. In real Auth0 mode this hardcoded
+          list would silently drift from the tenant's actual state (it did:
+          before activating exp_device_segmentation, this array still claimed
+          it was "draft" and exp_passkey_enrollment was "active" — the reverse
+          of reality). The live panel below is the source of truth instead. ── */}
+      {!isAuth0Mode && (
       <Card variant="raised">
         <CardHeader>
           <CardTitle>Active Experiments</CardTitle>
@@ -274,9 +285,10 @@ export default function ExperimentCenter() {
           </Table>
         </CardContent>
       </Card>
+      )}
 
-      {/* ── Detail view ── */}
-      {selected && selectedData && (
+      {/* ── Detail view (mock mode only, see note above) ── */}
+      {!isAuth0Mode && selected && selectedData && (
         <Card>
           <CardHeader className={s.detailHeader}>
             <div>
@@ -386,23 +398,6 @@ export default function ExperimentCenter() {
               </Button>
             </div>
 
-            {/* ── Universal Login demo buttons (ACUL experiments) ── */}
-            {isAuth0Mode && selected.aculDemo && (
-              <div className={s.demoRow}>
-                <p className={s.demoHint}>
-                  Demo in Universal Login — forces a variant at the Auth0 login screen. Requires ACUL screens to be deployed.
-                </p>
-                <div className={s.demoBtns}>
-                  <Button variant="outline" size="sm" onClick={() => loginWithVariant('passkey')}>
-                    <Fingerprint size={14} /> Demo passkey-first
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => loginWithVariant('password')}>
-                    <KeyRound size={14} /> Demo password-first
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* ── Metric bars (for experiments with mock/live data) ── */}
             {(selectedData.control.value || selectedData.treatment.value) && (
               <div className={s.metricBars}>
@@ -431,7 +426,7 @@ export default function ExperimentCenter() {
         </Card>
       )}
 
-      {!selected && (
+      {!isAuth0Mode && !selected && (
         <p className={s.selectHint}>Select an experiment above to view variant details and preview it in the app.</p>
       )}
 
@@ -516,12 +511,23 @@ export default function ExperimentCenter() {
                                     {!alloc.is_control && !alloc.is_fallback && <Badge variant="default">treatment</Badge>}
                                   </td>
                                   <td>
-                                    {alloc.segment_id
-                                      ? <button className={s.idChip} onClick={() => copyId(alloc.segment_id)} title="Copy segment ID">
-                                          <code>{alloc.segment_id}</code>
-                                          {copiedId === alloc.segment_id ? <Check size={11} /> : <Copy size={11} />}
-                                        </button>
-                                      : <span className={s.fallbackLabel}>fallback (all)</span>}
+                                    {alloc.segment
+                                      ? <div className={s.conditionChips}>
+                                          {Object.entries(alloc.segment.rules?.[0]?.match ?? {}).map(([field, values]) => (
+                                            <span key={field} className={s.conditionChip}>
+                                              <span className={s.conditionField}>{field}</span>
+                                              <span className={s.conditionValues}>
+                                                {(Array.isArray(values) ? values : [values]).map(truncateMid).join(', ')}
+                                              </span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      : alloc.segment_id
+                                        ? <button className={s.idChip} onClick={() => copyId(alloc.segment_id)} title="Copy segment ID">
+                                            <code>{alloc.segment_id}</code>
+                                            {copiedId === alloc.segment_id ? <Check size={11} /> : <Copy size={11} />}
+                                          </button>
+                                        : <span className={s.fallbackLabel}>fallback (all)</span>}
                                   </td>
                                   {variations.length > 0 && <td className={s.varName}>{variation?.name ?? '—'}</td>}
                                 </tr>
@@ -548,6 +554,22 @@ export default function ExperimentCenter() {
                               ))}
                             </tbody>
                           </table>
+                        </div>
+                      )}
+
+                      {exp.id === AUTH0_EXPERIMENT_IDS.exp_device_segmentation && (
+                        <div className={s.demoRow}>
+                          <p className={s.demoHint}>
+                            Demo in Universal Login — forces a variant at the Auth0 login screen. Requires ACUL screens to be deployed.
+                          </p>
+                          <div className={s.demoBtns}>
+                            <Button variant="outline" size="sm" onClick={() => loginWithVariant('passkey')}>
+                              <Fingerprint size={14} /> Demo passkey-first
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => loginWithVariant('password')}>
+                              <KeyRound size={14} /> Demo password-first
+                            </Button>
+                          </div>
                         </div>
                       )}
 

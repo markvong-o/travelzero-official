@@ -249,6 +249,22 @@
 .idChip:hover { background: var(--secondary); border-color: var(--color-primary); }
 .idChip code { font-family: monospace; letter-spacing: -0.01em; }
 
+.conditionChips { display: flex; flex-direction: column; gap: 0.25rem; }
+.conditionChip {
+  display: inline-flex; align-items: baseline; gap: 0.3rem; flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+}
+.conditionField {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--muted-foreground);
+}
+.conditionValues {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--foreground); background: var(--muted);
+  border-radius: var(--radius-sm); padding: 0.0625rem 0.375rem;
+}
+
 .allocSection { display: flex; flex-direction: column; gap: 0.5rem; }
 .allocTitle { font-size: var(--font-size-xs); font-weight: 600; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
 .allocTable { width: 100%; border-collapse: collapse; font-size: var(--font-size-xs); }

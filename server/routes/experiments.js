@@ -1,6 +1,6 @@
 import express from 'express';
 import store from '../store.js';
-import { isAuth0Configured, getExperiments, getFeatureFlag } from '../lib/auth0-management.js';
+import { isAuth0Configured, getExperiments, getFeatureFlag, getSegment } from '../lib/auth0-management.js';
 
 const router = express.Router();
 
@@ -96,7 +96,23 @@ router.get('/auth0', async (req, res) => {
         if (exp.feature_flag_id) {
           try { featureFlag = await getFeatureFlag(exp.feature_flag_id); } catch {}
         }
-        return { ...exp, feature_flag: featureFlag };
+
+        // Resolve each allocation's segment_id into its actual match rules
+        // (browser, platform, client_id, etc.) so the admin UI can show the
+        // real targeting conditions instead of just an opaque segment ID.
+        const allocations = await Promise.all(
+          (exp.allocations ?? []).map(async (alloc) => {
+            if (!alloc.segment_id) return alloc;
+            try {
+              const segment = await getSegment(alloc.segment_id);
+              return { ...alloc, segment };
+            } catch {
+              return alloc;
+            }
+          })
+        );
+
+        return { ...exp, feature_flag: featureFlag, allocations };
       })
     );
 
