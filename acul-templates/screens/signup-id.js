@@ -18,28 +18,33 @@ const TRAVELZERO_CLIENT_ID = 'Sf9FmZInlomeJpEoxnCyKE00s46pmFL2';
 const TZ_BG = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop';
 const TZ_LOGO = 'https://markvong-o.github.io/openmoji-icons/2708.png';
 
-const screen = new SignupId();
-const ctx = window.universal_login_context;
-const clientId = ctx.client?.client_id;
-const isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+let screen, ctx, clientId, isTravelZero, experiment, isPasskeyFirst, appTheme;
 
-const experiment = ctx.experiment;
-const isPasskeyFirst = isTravelZero && experiment ? !experiment.is_control : false;
-const appTheme = getTheme(clientId);
+try {
+  screen = new SignupId();
+  ctx = window.universal_login_context;
+  clientId = ctx.client?.client_id;
+  isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
+  experiment = ctx.experiment;
+  isPasskeyFirst = isTravelZero && experiment ? !experiment.is_control : false;
+  appTheme = getTheme(clientId);
+} catch (err) {
+  console.error('[TravelZero ACUL] Failed to initialize screen context:', err);
+}
 
-injectStyles(isTravelZero, appTheme);
+injectStyles(isTravelZero, appTheme ?? getTheme(null));
 
 const root = document.getElementById('custom-screen-content') ?? document.body;
 root.innerHTML = isTravelZero
   ? renderTravelZero(isPasskeyFirst, ctx)
-  : renderBranded(appTheme, ctx);
+  : renderBranded(appTheme ?? getTheme(null), ctx ?? {});
 
 wireHandlers(screen);
 
 // ─── TravelZero renderers ─────────────────────────────────────────────────────
 
 function renderTravelZero(passkeyFirst, ctx) {
-  const loginUrl = ctx.screen?.links?.login_link ?? '#';
+  const loginUrl = ctx.screen?.links?.login ?? '#';
   return `
     <div class="tz-layout">
       <div class="tz-panel">
@@ -107,7 +112,7 @@ function renderPasswordFirst() {
 // ─── Branded renderer (all other apps) ───────────────────────────────────────
 
 function renderBranded(theme, ctx) {
-  const loginUrl = ctx.screen?.links?.login_link ?? '#';
+  const loginUrl = ctx.screen?.links?.login ?? '#';
   const title = ctx.screen?.texts?.title ?? 'Create your account';
   const subtitle = ctx.screen?.texts?.description ?? `Sign up for ${theme.name}`;
 
