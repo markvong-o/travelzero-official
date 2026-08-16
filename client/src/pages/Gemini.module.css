@@ -257,3 +257,235 @@
   border-color: #8ab4f8;
   box-shadow: 0 0 0 1px #8ab4f8;
 }
+
+/* ── Featured prompt chip ───────────────────────────────────────────────── */
+.chipFeatured {
+  color: #8ab4f8;
+  border-color: rgba(138, 180, 248, 0.4);
+  background: rgba(138, 180, 248, 0.06);
+}
+.chipFeatured:hover {
+  color: #c9d8f8;
+  border-color: rgba(138, 180, 248, 0.7);
+  background: rgba(138, 180, 248, 0.12);
+}
+
+/* ── Panel wrapper (full-width, left-aligned) ────────────────────────────── */
+.panelWrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ── Base panel ──────────────────────────────────────────────────────────── */
+.panel {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #3c4043;
+  border-radius: var(--radius-xl);
+  background: #1e1f20;
+}
+
+/* Variant tints */
+.panelWarm  { border-color: rgba(251, 146, 60, 0.35); }
+.panelAccent { border-color: rgba(129, 140, 248, 0.35); }
+.panelGreen { border-color: rgba(52, 211, 153, 0.35); }
+.panelOffer { border-color: rgba(138, 180, 248, 0.3); background: rgba(138, 180, 248, 0.04); }
+
+/* Panel header */
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #3c4043;
+  background: #28292a;
+  font-size: var(--font-size-xs);
+  color: #9aa0a6;
+}
+.panelTitle { flex: 1; }
+
+/* Panel header icon colors */
+.panelIconMuted  { color: #9aa0a6; flex-shrink: 0; }
+.panelIconGreen  { color: #34d399; flex-shrink: 0; }
+.panelIconWarm   { color: #fb923c; flex-shrink: 0; }
+.panelIconAccent { color: #818cf8; flex-shrink: 0; }
+
+/* Panel badges */
+.panelBadge {
+  flex-shrink: 0;
+  padding: 0.1rem 0.45rem;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+}
+.panelBadgeBlue  { background: rgba(138, 180, 248, 0.12); color: #8ab4f8; }
+.panelBadgeWarm  { background: rgba(251, 146, 60, 0.12);  color: #fb923c; }
+.panelBadgeGreen { background: rgba(52, 211, 153, 0.12);  color: #34d399; }
+
+/* Panel body */
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.75rem;
+}
+
+/* ── Key-value grid ──────────────────────────────────────────────────────── */
+.kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+.kvKey   { color: rgba(52, 211, 153, 0.65); white-space: nowrap; }
+.kvVal   { color: #c8cdd2; word-break: break-all; display: flex; align-items: center; gap: 0.25rem; }
+.kvMuted { color: #5f6368; }
+.kvIcon  { flex-shrink: 0; opacity: 0.6; }
+.kvValGreen { color: #34d399; }
+
+/* ── Delegation chain row ────────────────────────────────────────────────── */
+.delegationRow {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #2d2f30;
+}
+.delegationIcon { color: #5f6368; flex-shrink: 0; }
+.delegationText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: #5f6368;
+  word-break: break-all;
+}
+
+/* ── Weather panel ───────────────────────────────────────────────────────── */
+.weatherMain {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.weatherTemp {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: #fb923c;
+  font-variant-numeric: tabular-nums;
+}
+.weatherDesc {
+  font-size: var(--font-size-sm);
+  color: #9aa0a6;
+}
+.weatherNote {
+  font-size: var(--font-size-xs);
+  color: #9aa0a6;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 0.375rem;
+  border-top: 1px solid #2d2f30;
+}
+
+/* ── Recommendations panel ───────────────────────────────────────────────── */
+.recList { display: flex; flex-direction: column; gap: 0.5rem; }
+.recRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+.recIconWrap {
+  display: flex;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: #28292a;
+  color: #9aa0a6;
+}
+.recInfo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.recName    { font-size: var(--font-size-sm); font-weight: 500; color: #e3e3e3; }
+.recPartner { font-size: 10px; color: #34d399; }
+.recDesc    { font-size: var(--font-size-xs); color: #9aa0a6; }
+.recCost    { flex-shrink: 0; font-size: var(--font-size-sm); font-weight: 500; color: #e3e3e3; }
+
+/* ── Birthday panel ──────────────────────────────────────────────────────── */
+.birthdayRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.birthdayItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+.birthdayLabel { font-size: var(--font-size-xs); color: #9aa0a6; }
+.birthdayDate  { font-size: var(--font-size-lg); font-weight: 600; color: #c8cdd2; }
+.birthdayDateAccent { color: #818cf8; }
+.birthdayArrow { color: #5f6368; flex-shrink: 0; }
+.birthdayNote {
+  font-size: var(--font-size-xs);
+  color: #9aa0a6;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 0.375rem;
+  border-top: 1px solid #2d2f30;
+}
+
+/* ── Offer / breakdown table ─────────────────────────────────────────────── */
+.offerTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  color: #c8cdd2;
+}
+.offerTable td { padding: 0.25rem 0; }
+.offerAmt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.offerSubtotalRow td { padding-top: 0.5rem; border-top: 1px solid #2d2f30; color: #9aa0a6; }
+.offerDiscountRow td { color: #34d399; }
+.offerTotalRow td   { font-size: var(--font-size-sm); color: #e3e3e3; }
+.offerBtn { margin-top: 0.25rem; width: 100%; }
+
+/* ── Booking progress ────────────────────────────────────────────────────── */
+.progressList { display: flex; flex-direction: column; gap: 0.5rem; }
+.progressItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.progressDone    { color: #34d399; flex-shrink: 0; margin-top: 0.1rem; }
+.progressLoading { color: #9aa0a6; flex-shrink: 0; margin-top: 0.1rem; }
+.progressMeta { display: flex; flex-direction: column; gap: 0.1rem; }
+.progressLabel { font-size: var(--font-size-xs); color: #c8cdd2; }
+.progressNote  { font-size: 10px; color: #5f6368; font-style: italic; }
+
+/* ── Vault note ──────────────────────────────────────────────────────────── */
+.vaultNote {
+  font-size: var(--font-size-xs);
+  color: #9aa0a6;
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 0.375rem;
+  border-top: 1px solid rgba(52, 211, 153, 0.15);
+}
+.codeSmall { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+
+/* ── Receipt footer ──────────────────────────────────────────────────────── */
+.receiptFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0;
+  border-top: 1px solid rgba(52, 211, 153, 0.15);
+  font-size: var(--font-size-xs);
+  color: #9aa0a6;
+}
+.receiptFooterIcon { color: #34d399; flex-shrink: 0; }

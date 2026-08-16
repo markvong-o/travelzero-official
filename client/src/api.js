@@ -155,6 +155,17 @@ class APIClient {
   getAuth0Experiments() {
     return this.request('/experiments/auth0', { method: 'GET' });
   }
+
+  getUcpProfile() {
+    return this.request('/assistant/ucp-profile', { method: 'GET' });
+  }
+
+  agentBookLondon() {
+    return this.request('/assistant/agent-book-london', {
+      method: 'POST',
+      body: JSON.stringify({ externalAgentId: 'gemini' }),
+    });
+  }
 }
 
 export default new APIClient();

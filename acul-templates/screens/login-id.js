@@ -55,8 +55,9 @@ if (isTravelZero) initCarousel();
 
 function renderTravelZero(passkeyFirst, ctx) {
   const signupUrl = ctx.screen?.links?.signup ?? '#';
+  const variantClass = passkeyFirst ? 'tz-layout--passkey' : 'tz-layout--password';
   return `
-    <div class="tz-layout">
+    <div class="tz-layout ${variantClass}">
       <div class="tz-panel">
         <div class="tz-card">
           <div class="tz-brand">
@@ -64,7 +65,7 @@ function renderTravelZero(passkeyFirst, ctx) {
             <span class="tz-brand-name">TravelZero</span>
             ${experiment ? `<span class="tz-exp-badge">${passkeyFirst ? 'Passkey-first' : 'Password-first'}</span>` : ''}
           </div>
-          ${passkeyFirst ? renderPasskeyFirst() : renderPasswordFirst()}
+          ${passkeyFirst ? renderPasskeyFirst(ctx) : renderPasswordFirst(ctx)}
           <p class="tz-alt">Don't have an account? <a href="${signupUrl}">Sign up</a></p>
         </div>
       </div>
@@ -113,12 +114,14 @@ function renderPasskeyFirst() {
     <button type="button" class="tz-btn-ghost" id="password-toggle">Use password instead →</button>
     <form id="password-fallback-form" class="tz-form tz-hidden" novalidate>
       <input type="email" name="username" id="username-password" placeholder="your@email.com" autocomplete="email" required />
-      <button type="submit" class="tz-btn-secondary">Continue with email</button>
+      <input type="password" name="password" id="password-password" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="tz-btn-secondary">Sign in</button>
     </form>
   `;
 }
 
-function renderPasswordFirst() {
+function renderPasswordFirst(ctx) {
+  const resetUrl = ctx?.screen?.links?.reset_password ?? '#';
   return `
     <div class="tz-head">
       <h1>Welcome back</h1>
@@ -126,7 +129,9 @@ function renderPasswordFirst() {
     </div>
     <form id="login-form" class="tz-form" novalidate>
       <input type="email" name="username" id="username-main" placeholder="your@email.com" autocomplete="email" required />
-      <button type="submit" class="tz-btn-primary">Continue</button>
+      <input type="password" name="password" id="password-main" placeholder="Password" autocomplete="current-password" required />
+      <a href="${resetUrl}" class="tz-forgot">Forgot password?</a>
+      <button type="submit" class="tz-btn-primary">Sign in</button>
     </form>
     <div class="tz-divider"><span>or</span></div>
     <button type="button" class="tz-btn-ghost" id="passkey-option">
@@ -170,10 +175,15 @@ function renderBranded(theme, ctx) {
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
 function wireHandlers(screen) {
-  // TravelZero passkey-first: primary form
+  // TravelZero passkey-first: primary form — triggers the WebAuthn ceremony
+  // directly on this screen via passkeyLogin(). Using the generic login()
+  // here would just hand Auth0 the identifier and let it route to whatever
+  // screen comes next (login-password/login-passkey), which falls back to
+  // the classic Universal Login template since only login-id/signup-id are
+  // built as ACUL screens.
   bind('passkey-form', 'submit', async (e) => {
     e.preventDefault();
-    await submit(screen, { username: val('username-passkey') });
+    await submitPasskey(screen, { username: val('username-passkey') });
   });
 
   // TravelZero passkey-first: password fallback toggle
@@ -186,19 +196,28 @@ function wireHandlers(screen) {
     });
     bind('password-fallback-form', 'submit', async (e) => {
       e.preventDefault();
-      await submit(screen, { username: val('username-password') });
+      await submit(screen, { username: val('username-password'), password: val('password-password') });
     });
   }
 
-  // TravelZero password-first / branded: primary login form
+  // TravelZero password-first: primary login form collects username + password
+  // together so both factors submit in one shot — avoids a second screen that
+  // would fall back to classic Universal Login (only login-id/signup-id are
+  // built as ACUL screens here). Branded (non-TravelZero) apps reuse this same
+  // form id but have no password-main field, so only attach it when present.
   bind('login-form', 'submit', async (e) => {
     e.preventDefault();
-    await submit(screen, { username: val('username-main') });
+    const params = { username: val('username-main') };
+    if (document.getElementById('password-main')) {
+      params.password = val('password-main');
+    }
+    await submit(screen, params);
   });
 
-  // TravelZero password-first: passkey alternative
+  // TravelZero password-first: passkey alternative — same reasoning as above,
+  // must call passkeyLogin() directly rather than the generic login().
   bind('passkey-option', 'click', async () => {
-    await submit(screen, { username: val('username-main') ?? '' });
+    await submitPasskey(screen, { username: val('username-main') });
   });
 }
 
@@ -216,6 +235,21 @@ async function submit(screen, params) {
     await screen.login(params);
   } catch (err) {
     showError(err.message ?? 'Sign in failed. Please try again.');
+    setLoading(false);
+  }
+}
+
+// Triggers the WebAuthn ceremony (navigator.credentials.get()) directly on this
+// screen via the SDK's dedicated passkeyLogin() — as opposed to submit() above,
+// which just hands Auth0 an identifier and lets it route to whatever screen is
+// next. If the user cancels the browser's passkey prompt or has none registered,
+// this rejects and we surface an inline error instead of navigating away.
+async function submitPasskey(screen, params) {
+  setLoading(true);
+  try {
+    await screen.passkeyLogin(params);
+  } catch (err) {
+    showError(err.message ?? 'Passkey sign-in failed. Please try again or use your password.');
     setLoading(false);
   }
 }
@@ -301,6 +335,23 @@ function injectStyles(isTravelZero, theme) {
       display: flex;
       min-height: 100vh;
       align-items: stretch;
+      /* Passkey-first palette (default) — warm, biometric-forward */
+      --tz-accent-1: #FF9F43;
+      --tz-accent-2: #FF6B6B;
+      --tz-accent-solid: #E8590C;
+      --tz-accent-hover: #C2410C;
+      --tz-accent-tint: 255, 159, 67;
+    }
+    /* Password-first palette — cooler, credential-forward. Carousel moves to
+       the left so the two variants read as visually distinct at a glance,
+       not just a swapped CTA. */
+    .tz-layout--password {
+      flex-direction: row-reverse;
+      --tz-accent-1: #4F86F7;
+      --tz-accent-2: #6C5CE7;
+      --tz-accent-solid: #3B5FE0;
+      --tz-accent-hover: #2F4EC7;
+      --tz-accent-tint: 79, 134, 247;
     }
     .tz-panel {
       flex: 0 0 40%;
@@ -314,7 +365,12 @@ function injectStyles(isTravelZero, theme) {
       backdrop-filter: blur(24px) saturate(180%);
       -webkit-backdrop-filter: blur(24px) saturate(180%);
       border-right: 1px solid rgba(255, 255, 255, 0.45);
-      box-shadow: 4px 0 40px -8px rgba(255, 159, 67, 0.12);
+      box-shadow: 4px 0 40px -8px rgba(var(--tz-accent-tint), 0.12);
+    }
+    .tz-layout--password .tz-panel {
+      border-right: none;
+      border-left: 1px solid rgba(255, 255, 255, 0.45);
+      box-shadow: -4px 0 40px -8px rgba(var(--tz-accent-tint), 0.12);
     }
 
     /* ── Carousel (right 60%) ── */
@@ -389,28 +445,30 @@ function injectStyles(isTravelZero, theme) {
     .tz-logo { width: 28px; height: 28px; object-fit: contain; }
     .tz-brand-name { font-size: 1rem; font-weight: 700; color: #1A1A2E; letter-spacing: -0.02em; }
     .tz-exp-badge {
-      margin-left: auto; font-size: 0.6875rem; font-weight: 600; color: #E8590C;
-      background: rgba(255, 159, 67, 0.12); border: 1px solid rgba(255, 159, 67, 0.2);
+      margin-left: auto; font-size: 0.6875rem; font-weight: 600; color: var(--tz-accent-solid);
+      background: rgba(var(--tz-accent-tint), 0.12); border: 1px solid rgba(var(--tz-accent-tint), 0.2);
       border-radius: 999px; padding: 0.15rem 0.6rem;
     }
     .tz-head { margin-bottom: 1.75rem; }
     .tz-head h1 { font-size: 1.75rem; font-weight: 800; color: #1A1A2E; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 0.375rem; }
     .tz-head p { font-size: 0.9rem; color: #6B7280; line-height: 1.5; }
     .tz-form { display: flex; flex-direction: column; gap: 0.625rem; }
+    .tz-forgot { align-self: flex-end; margin-top: -0.25rem; font-size: 0.8125rem; font-weight: 600; color: var(--tz-accent-solid); text-decoration: none; }
+    .tz-forgot:hover { color: var(--tz-accent-hover); }
     .tz-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.125rem 0; color: #9CA3AF; font-size: 0.8125rem; }
-    .tz-divider::before, .tz-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255, 159, 67, 0.12); }
+    .tz-divider::before, .tz-divider::after { content: ''; flex: 1; height: 1px; background: rgba(var(--tz-accent-tint), 0.12); }
     .tz-alt { margin-top: 1.75rem; font-size: 0.875rem; color: #6B7280; text-align: center; }
-    .tz-alt a { color: #E8590C; font-weight: 600; text-decoration: none; }
-    .tz-alt a:hover { color: #C2410C; }
+    .tz-alt a { color: var(--tz-accent-solid); font-weight: 600; text-decoration: none; }
+    .tz-alt a:hover { color: var(--tz-accent-hover); }
     .tz-btn-primary {
       width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       padding: 0.9rem 1.5rem; font-size: 0.9375rem; font-weight: 700; font-family: inherit;
-      color: #fff; background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%);
+      color: #fff; background: linear-gradient(135deg, var(--tz-accent-1) 0%, var(--tz-accent-2) 100%);
       border: none; border-radius: 14px; cursor: pointer;
-      box-shadow: 0 0 48px -8px rgba(255, 159, 67, 0.35);
+      box-shadow: 0 0 48px -8px rgba(var(--tz-accent-tint), 0.35);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .tz-btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 12px 48px -8px rgba(255, 159, 67, 0.4); }
+    .tz-btn-primary:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 12px 48px -8px rgba(var(--tz-accent-tint), 0.4); }
     .tz-btn-primary:disabled { cursor: not-allowed; }
     .tz-btn-secondary {
       width: 100%; padding: 0.875rem 1.5rem; font-size: 0.9375rem; font-weight: 600; font-family: inherit;
@@ -418,13 +476,13 @@ function injectStyles(isTravelZero, theme) {
       border: 1.5px solid rgba(255,255,255,0.45); border-radius: 12px; cursor: pointer;
       transition: background 0.2s, border-color 0.2s;
     }
-    .tz-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.7); border-color: rgba(255,159,67,0.25); }
+    .tz-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.7); border-color: rgba(var(--tz-accent-tint), 0.25); }
     .tz-btn-ghost {
       background: none; border: none; font-size: 0.875rem; font-weight: 600; font-family: inherit;
-      color: #E8590C; cursor: pointer; padding: 0.25rem 0;
+      color: var(--tz-accent-solid); cursor: pointer; padding: 0.25rem 0;
       display: inline-flex; align-items: center; gap: 0.375rem;
     }
-    .tz-btn-ghost:hover { color: #C2410C; }
+    .tz-btn-ghost:hover { color: var(--tz-accent-hover); }
 
     /* ════════════════════════════════════════════════
        Branded apps — per-app theme via CSS variables
@@ -499,7 +557,7 @@ function injectStyles(isTravelZero, theme) {
       font-size: 0.9375rem;
       font-family: inherit;
       background: ${isTravelZero ? 'rgba(255, 247, 237, 0.6)' : 'var(--app-input-bg)'};
-      border: 1.5px solid ${isTravelZero ? 'rgba(255, 159, 67, 0.15)' : 'var(--app-input-border)'};
+      border: 1.5px solid ${isTravelZero ? 'rgba(var(--tz-accent-tint), 0.15)' : 'var(--app-input-border)'};
       border-radius: ${isTravelZero ? '12px' : '8px'};
       color: ${isTravelZero ? '#1A1A2E' : 'var(--app-text)'};
       outline: none;
@@ -507,8 +565,8 @@ function injectStyles(isTravelZero, theme) {
     }
     input::placeholder { color: #9CA3AF; }
     input:focus {
-      border-color: ${isTravelZero ? '#FF9F43' : 'var(--app-input-focus)'};
-      box-shadow: 0 0 0 3px ${isTravelZero ? 'rgba(255, 159, 67, 0.15)' : 'color-mix(in srgb, var(--app-input-focus) 20%, transparent)'};
+      border-color: ${isTravelZero ? 'var(--tz-accent-1)' : 'var(--app-input-focus)'};
+      box-shadow: 0 0 0 3px ${isTravelZero ? 'rgba(var(--tz-accent-tint), 0.15)' : 'color-mix(in srgb, var(--app-input-focus) 20%, transparent)'};
     }
 
     .acul-error {

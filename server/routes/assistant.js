@@ -235,4 +235,147 @@ router.post('/agent-book', (req, res) => {
   res.json(receipt);
 });
 
+/**
+ * GET /api/assistant/ucp-profile
+ * Returns the authenticated user's profile in UCP (Universal Commerce Profile) format,
+ * including the delegation chain showing Gemini as the acting agent.
+ *
+ * In a real UCP deployment this endpoint would be a protected resource discovered via
+ * RFC 9728 /.well-known/oauth-protected-resource. Here it's a first-party endpoint on
+ * TravelZero's own API that Gemini calls after exchanging tokens via Auth0's token-exchange
+ * grant — the `act` claim in the response represents that delegation.
+ */
+router.get('/ucp-profile', (req, res) => {
+  const user = authenticateUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const agentId = 'agent/google-gemini';
+  const rv = user.user_metadata.recentlyViewed || null;
+
+  res.json({
+    subject: user.id,
+    email: user.email,
+    profile: {
+      loyalty_balance: user.loyaltyPoints,
+      loyalty_value_usd: (user.loyaltyPoints * 0.01).toFixed(2),
+      interests: user.user_metadata.preferences.interests,
+      travel_style: user.user_metadata.preferences.travelStyle,
+      recently_viewed: rv,
+      birthday: user.user_metadata.birthday || null,
+    },
+    delegation: {
+      subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+      actor_claim: {
+        sub: user.id,
+        act: { sub: agentId },
+      },
+      scopes: ['read:profile', 'read:loyalty', 'read:travel_preferences', 'read:recently_viewed'],
+      issued_to: agentId,
+    },
+    ucp_version: '1.0',
+    fetched_at: new Date().toISOString(),
+  });
+});
+
+/**
+ * POST /api/assistant/agent-book-london
+ * Handles the London multi-booking flow for the Gemini agentic commerce demo:
+ * - Updated return flights (4 nights → 6 nights)
+ * - 2 extra hotel nights at The Curtain
+ * - Thames Sunset Cruise booked via Token Vault (partner: Thames Cruises Ltd)
+ *
+ * The token vault reference in the receipt approximates Auth0 Token Vault's real
+ * `federated-connection-access-token` grant — the partner credential was stored once
+ * at integration time and is retrieved server-side without a fresh consent exchange.
+ */
+router.post('/agent-book-london', (req, res) => {
+  const user = authenticateUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { externalAgentId } = req.body;
+  if (!externalAgentId) {
+    return res.status(400).json({ error: 'Missing externalAgentId' });
+  }
+
+  const tokenVaultRef = 'tv_' + store.generateId().substring(0, 8);
+
+  const bookings = [
+    {
+      id: store.generateId(),
+      type: 'flight',
+      description: 'British Airways BA 178 — JFK → LHR, Sep 5–11 (extended)',
+      originalCost: 420,
+      updatedCost: 630,
+      status: 'confirmed',
+    },
+    {
+      id: store.generateId(),
+      type: 'hotel',
+      description: 'The Curtain Hotel, Shoreditch — 6 nights (Sep 5–11)',
+      originalCost: 640,
+      updatedCost: 960,
+      status: 'confirmed',
+    },
+    {
+      id: store.generateId(),
+      type: 'experience',
+      description: 'Thames Sunset Cruise — Sep 10, evening',
+      cost: 230,
+      partner: 'Thames Cruises Ltd',
+      vaultRef: tokenVaultRef,
+      status: 'confirmed',
+    },
+  ];
+
+  const subtotal = bookings.reduce((sum, b) => sum + (b.updatedCost ?? b.cost), 0);
+  const loyaltyApplied = Math.min(user.loyaltyPoints, 2000);
+  const loyaltyDiscount = loyaltyApplied * 0.01;
+  const total = subtotal - loyaltyDiscount;
+
+  store.itineraries[user.id] = {
+    id: store.generateId(),
+    title: 'London — Long Weekend Extended',
+    destination: 'London',
+    checkIn: '2026-09-05',
+    checkOut: '2026-09-11',
+    nights: 6,
+    bookings,
+    subtotal,
+    loyaltyApplied,
+    loyaltyDiscount,
+    total,
+    bookedBy: externalAgentId,
+    bookedAt: new Date().toISOString(),
+  };
+
+  res.json({
+    success: true,
+    bookings,
+    receipt: {
+      subtotal,
+      loyaltyApplied,
+      loyaltyDiscount,
+      total,
+      currency: 'USD',
+      agentIdentity: 'Google Gemini Travel Agent',
+      delegationChain: {
+        sub: user.email,
+        act: { sub: 'agent/google-gemini', name: 'Google Gemini' },
+      },
+      tokenVault: {
+        partner: 'Thames Cruises Ltd',
+        tokenReference: tokenVaultRef,
+        grantType: 'urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token',
+        expiresIn: 3600,
+        newConsentRequired: false,
+      },
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+
 export default router;

@@ -1,6 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, CloudSun, Sailboat, Wine, Loader2, ShieldCheck, Send } from 'lucide-react';
+import {
+  ArrowRight, BadgeCheck, CheckCircle2, Clock, CreditCard,
+  Gift, Hotel, Loader2, Lock, Plane, Sailboat, Send,
+  ShieldCheck, Sparkles, Sun, Utensils, Wine,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,45 +12,348 @@ import { cn } from '@/lib/utils';
 import api from '../api.js';
 import s from './Gemini.module.css';
 
-const SUGGESTED_PROMPTS = [
-  "What's the weather like in Italy?",
-  "What should I pack for Italy?",
-  "Can you suggest some add-ons for my trip?",
-  "How can I use my loyalty points?",
-];
+// This page simulates a *separate, external* app (Google Gemini) that has been
+// delegated permission to act on TravelZero on the user's behalf. It intentionally
+// has no TravelZero nav/branding. The booking calls it makes are real server calls.
 
-// Mock: this page simulates a *separate, external* app (Google Gemini) that has
-// been delegated permission to act on TravelZero on the user's behalf — it is not
-// part of TravelZero's own product surface, which is why it deliberately doesn't
-// share TravelZero's NavBar/branding (see App.jsx). The booking call it makes below
-// is real (POST /api/assistant/agent-book), demonstrating genuine delegated agentic
-// commerce rather than a purely client-side simulation.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const LONDON_PROMPT =
+  'Plan me a long weekend in London next month for under $2,000, using loyalty points wherever possible';
+
+// ─── Panel components ────────────────────────────────────────────────────────
+
+function ProfilePanel({ data }) {
+  if (!data) return null;
+  const { profile, delegation } = data;
+  const rv = profile.recently_viewed;
+
+  return (
+    <div className={s.panel}>
+      <div className={s.panelHead}>
+        <BadgeCheck size={14} className={s.panelIconGreen} />
+        <span className={s.panelTitle}>Profile fetched via TravelZero UCP</span>
+        <span className={cn(s.panelBadge, s.panelBadgeBlue)}>delegated access</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.kv}>
+          <span className={s.kvKey}>loyalty_balance</span>
+          <span className={s.kvVal}>
+            {profile.loyalty_balance.toLocaleString()} pts{' '}
+            <span className={s.kvMuted}>(${profile.loyalty_value_usd} value)</span>
+          </span>
+
+          <span className={s.kvKey}>interests</span>
+          <span className={s.kvVal}>{profile.interests.join(', ')}</span>
+
+          {rv && (
+            <>
+              <span className={s.kvKey}>recently_viewed.flights</span>
+              <span className={s.kvVal}>
+                <Plane size={11} className={s.kvIcon} />
+                {rv.flights.route} · ${rv.flights.priceUSD} · {rv.flights.outbound} – {rv.flights.inbound}
+              </span>
+
+              <span className={s.kvKey}>recently_viewed.hotel</span>
+              <span className={s.kvVal}>
+                <Hotel size={11} className={s.kvIcon} />
+                {rv.hotel.name}, {rv.hotel.location} · ${rv.hotel.pricePerNightUSD}/night × {rv.hotel.nights}
+              </span>
+            </>
+          )}
+        </div>
+        <div className={s.delegationRow}>
+          <Lock size={10} className={s.delegationIcon} />
+          <code className={s.delegationText}>
+            sub={delegation.actor_claim.sub.substring(0, 20)}&hellip; &nbsp;act.sub=
+            {delegation.actor_claim.act.sub}
+          </code>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WeatherPanel() {
+  return (
+    <div className={cn(s.panel, s.panelWarm)}>
+      <div className={s.panelHead}>
+        <Sun size={14} className={s.panelIconWarm} />
+        <span className={s.panelTitle}>London Forecast — Sep 5–11</span>
+        <span className={cn(s.panelBadge, s.panelBadgeWarm)}>unexpected heatwave</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.weatherMain}>
+          <span className={s.weatherTemp}>27°C</span>
+          <span className={s.weatherDesc}>Full sunshine, all week</span>
+        </div>
+        <p className={s.weatherNote}>
+          London's reputation: drizzle and grey. This particular week: an unexpected heatwave.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const ADD_ONS = [
   {
-    id: 'lake-como',
-    name: 'Private Boat Day — Lake Como',
-    description: 'A full day cruising Lake Como with a private skipper.',
-    cost: 220,
-    type: 'experience',
-    icon: Sailboat,
+    id: 'thames-cruise',
+    name: 'Thames Sunset Cruise',
+    desc: 'A sunset cruise along the Thames — ideal for a warm evening.',
+    cost: 230,
+    Icon: Sailboat,
+    partner: 'Thames Cruises Ltd',
   },
   {
-    id: 'amalfi-cruise',
-    name: 'Sunset Cruise - Amalfi Coast',
-    description: 'Experience a magical sunset from the water',
-    cost: 180,
-    type: 'experience',
-    icon: Sailboat,
+    id: 'rooftop-dinner',
+    name: 'Rooftop Terrace Dinner — Sky Garden',
+    desc: 'Panoramic views, warm evening air, 35 floors up.',
+    cost: 85,
+    Icon: Utensils,
+    partner: null,
   },
   {
-    id: 'tuscany-wine',
-    name: 'Outdoor Wine Tasting — Tuscany',
-    description: 'An al fresco tasting through Chianti\'s countryside vineyards.',
+    id: 'kent-vineyard',
+    name: 'Kent Vineyard Tour',
+    desc: "A day in Kent's wine country — outdoor, countryside, heatwave-perfect.",
     cost: 95,
-    type: 'experience',
-    icon: Wine,
+    Icon: Wine,
+    partner: null,
   },
 ];
+
+function RecsPanel() {
+  return (
+    <div className={s.panel}>
+      <div className={s.panelHead}>
+        <Sparkles size={14} className={s.panelIconAccent} />
+        <span className={s.panelTitle}>Recommended — matched to profile + forecast</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.recList}>
+          {ADD_ONS.map((a) => (
+            <div key={a.id} className={s.recRow}>
+              <span className={s.recIconWrap}>
+                <a.Icon size={14} />
+              </span>
+              <div className={s.recInfo}>
+                <span className={s.recName}>{a.name}</span>
+                {a.partner && <span className={s.recPartner}>via {a.partner}</span>}
+                <span className={s.recDesc}>{a.desc}</span>
+              </div>
+              <span className={s.recCost}>${a.cost}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BirthdayPanel() {
+  return (
+    <div className={cn(s.panel, s.panelAccent)}>
+      <div className={s.panelHead}>
+        <Gift size={14} className={s.panelIconAccent} />
+        <span className={s.panelTitle}>Something I noticed</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.birthdayRow}>
+          <div className={s.birthdayItem}>
+            <span className={s.birthdayLabel}>Trip ends</span>
+            <span className={s.birthdayDate}>Sep 9</span>
+          </div>
+          <ArrowRight size={14} className={s.birthdayArrow} />
+          <div className={s.birthdayItem}>
+            <span className={s.birthdayLabel}>Your birthday</span>
+            <span className={cn(s.birthdayDate, s.birthdayDateAccent)}>Sep 11</span>
+          </div>
+        </div>
+        <p className={s.birthdayNote}>
+          Two-day gap. The cruise runs evenings along the Thames. If you extend through the 11th,
+          you'd be on it for your birthday.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ExtendOfferPanel({ onConfirm, notAuthenticated, disabled }) {
+  return (
+    <div className={cn(s.panel, s.panelOffer)}>
+      <div className={s.panelHead}>
+        <CreditCard size={14} className={s.panelIconAccent} />
+        <span className={s.panelTitle}>Extended trip — cost breakdown</span>
+      </div>
+      <div className={s.panelBody}>
+        <table className={s.offerTable}>
+          <tbody>
+            <tr>
+              <td>Flights (Sep 5–11, updated)</td>
+              <td className={s.offerAmt}>$630</td>
+            </tr>
+            <tr>
+              <td>The Curtain Hotel (6 nights)</td>
+              <td className={s.offerAmt}>$960</td>
+            </tr>
+            <tr>
+              <td>Thames Sunset Cruise</td>
+              <td className={s.offerAmt}>$230</td>
+            </tr>
+            <tr className={s.offerSubtotalRow}>
+              <td>Subtotal</td>
+              <td className={s.offerAmt}>$1,820</td>
+            </tr>
+            <tr className={s.offerDiscountRow}>
+              <td>Loyalty points (2,000 pts)</td>
+              <td className={s.offerAmt}>−$100</td>
+            </tr>
+            <tr className={s.offerTotalRow}>
+              <td>
+                <strong>Total</strong>
+              </td>
+              <td className={s.offerAmt}>
+                <strong>$1,720</strong>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {notAuthenticated ? (
+          <div className={s.authWarn}>
+            Sign in to TravelZero so I can act on your behalf.{' '}
+            <Link to="/login">Sign in</Link>
+          </div>
+        ) : (
+          <Button size="sm" onClick={onConfirm} disabled={disabled} className={s.offerBtn}>
+            Extend my trip and book everything
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BookingProgressPanel({ items }) {
+  return (
+    <div className={s.panel}>
+      <div className={s.panelHead}>
+        <Clock size={14} className={s.panelIconMuted} />
+        <span className={s.panelTitle}>Booking in progress</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.progressList}>
+          {items.map((item) => (
+            <div key={item.id} className={s.progressItem}>
+              {item.status === 'done' ? (
+                <CheckCircle2 size={14} className={s.progressDone} />
+              ) : (
+                <Loader2 size={14} className={cn(s.progressLoading, 'spin')} />
+              )}
+              <div className={s.progressMeta}>
+                <span className={s.progressLabel}>{item.label}</span>
+                {item.note && <span className={s.progressNote}>{item.note}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VaultPanel({ data }) {
+  const tv = data.tokenVault;
+  const grantShort = tv.grantType.split(':').slice(-1)[0];
+  return (
+    <div className={cn(s.panel, s.panelGreen)}>
+      <div className={s.panelHead}>
+        <Lock size={14} className={s.panelIconGreen} />
+        <span className={s.panelTitle}>Token Vault — partner credential</span>
+        <span className={cn(s.panelBadge, s.panelBadgeGreen)}>no new consent</span>
+      </div>
+      <div className={s.panelBody}>
+        <div className={s.kv}>
+          <span className={s.kvKey}>partner</span>
+          <span className={s.kvVal}>{tv.partner}</span>
+
+          <span className={s.kvKey}>vault_ref</span>
+          <span className={s.kvVal}>
+            <code>{tv.tokenReference}</code>
+          </span>
+
+          <span className={s.kvKey}>grant_type</span>
+          <span className={s.kvVal}>
+            <code className={s.codeSmall}>{grantShort}</code>
+          </span>
+
+          <span className={s.kvKey}>new_consent_required</span>
+          <span className={cn(s.kvVal, s.kvValGreen)}>false</span>
+        </div>
+        <p className={s.vaultNote}>
+          TravelZero and Thames Cruises Ltd have an established trust relationship. The credential
+          was stored once at integration time, so no fresh consent exchange is needed.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ReceiptPanel({ receipt, bookings }) {
+  return (
+    <div className={cn(s.panel, s.panelGreen)}>
+      <div className={s.panelHead}>
+        <CheckCircle2 size={14} className={s.panelIconGreen} />
+        <span className={s.panelTitle}>Booking confirmed</span>
+        <span className={cn(s.panelBadge, s.panelBadgeGreen)}>all items booked</span>
+      </div>
+      <div className={s.panelBody}>
+        <table className={s.offerTable}>
+          <tbody>
+            {bookings.map((b) => (
+              <tr key={b.id}>
+                <td>{b.description}</td>
+                <td className={s.offerAmt}>${(b.updatedCost ?? b.cost).toLocaleString()}</td>
+              </tr>
+            ))}
+            <tr className={s.offerSubtotalRow}>
+              <td>Subtotal</td>
+              <td className={s.offerAmt}>${receipt.subtotal.toLocaleString()}</td>
+            </tr>
+            <tr className={s.offerDiscountRow}>
+              <td>Loyalty points ({receipt.loyaltyApplied.toLocaleString()} pts)</td>
+              <td className={s.offerAmt}>−${receipt.loyaltyDiscount}</td>
+            </tr>
+            <tr className={s.offerTotalRow}>
+              <td>
+                <strong>Total charged</strong>
+              </td>
+              <td className={s.offerAmt}>
+                <strong>${receipt.total.toLocaleString()}</strong>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div className={s.receiptFooter}>
+          <ShieldCheck size={13} className={s.receiptFooterIcon} />
+          <span>
+            Booked by <strong>{receipt.agentIdentity}</strong> on behalf of{' '}
+            <strong>{receipt.delegationChain.sub}</strong>
+          </span>
+        </div>
+        <div className={s.delegationRow}>
+          <Lock size={10} className={s.delegationIcon} />
+          <code className={s.delegationText}>
+            sub={receipt.delegationChain.sub} &nbsp;·&nbsp; act.sub=
+            {receipt.delegationChain.act.sub}
+          </code>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Chat bubble ─────────────────────────────────────────────────────────────
 
 function Bubble({ from, children }) {
   const isGemini = from === 'gemini';
@@ -57,134 +364,308 @@ function Bubble({ from, children }) {
   );
 }
 
+// ─── Main component ──────────────────────────────────────────────────────────
+
+const MOCK_PROFILE = {
+  profile: {
+    loyalty_balance: 10000,
+    loyalty_value_usd: '100.00',
+    interests: ['culture', 'outdoor_activities', 'local_cuisine'],
+    travel_style: 'leisurely',
+    recently_viewed: {
+      flights: {
+        route: 'JFK → LHR',
+        outbound: 'Sep 5, 2026',
+        inbound: 'Sep 9, 2026',
+        priceUSD: 420,
+        airline: 'British Airways',
+        nights: 4,
+      },
+      hotel: {
+        name: 'The Curtain Hotel',
+        location: 'Shoreditch, London',
+        pricePerNightUSD: 160,
+        nights: 4,
+      },
+    },
+    birthday: '2026-09-11',
+  },
+  delegation: {
+    actor_claim: {
+      sub: 'emma@demo.travelzero.com',
+      act: { sub: 'agent/google-gemini' },
+    },
+    scopes: ['read:profile', 'read:loyalty', 'read:recently_viewed'],
+    issued_to: 'agent/google-gemini',
+  },
+};
+
+function mockLondonBooking(email) {
+  const tvRef = 'tv_' + Math.random().toString(36).slice(2, 10);
+  return {
+    success: true,
+    bookings: [
+      { id: '1', description: 'British Airways BA 178 — JFK → LHR, Sep 5–11 (extended)', updatedCost: 630 },
+      { id: '2', description: 'The Curtain Hotel, Shoreditch — 6 nights (Sep 5–11)', updatedCost: 960 },
+      { id: '3', description: 'Thames Sunset Cruise — Sep 10, evening', cost: 230 },
+    ],
+    receipt: {
+      subtotal: 1820,
+      loyaltyApplied: 2000,
+      loyaltyDiscount: 100,
+      total: 1720,
+      currency: 'USD',
+      agentIdentity: 'Google Gemini Travel Agent',
+      delegationChain: {
+        sub: email ?? 'emma@demo.travelzero.com',
+        act: { sub: 'agent/google-gemini', name: 'Google Gemini' },
+      },
+      tokenVault: {
+        partner: 'Thames Cruises Ltd',
+        tokenReference: tvRef,
+        grantType:
+          'urn:auth0:params:oauth:grant-type:token-exchange:federated-connection-access-token',
+        expiresIn: 3600,
+        newConsentRequired: false,
+      },
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+
 export default function Gemini() {
   const { user, isAnonymous } = useAuth();
+
   const [messages, setMessages] = useState([
     {
+      id: 'init',
       from: 'gemini',
-      content: "Hi Emma, I've been tracking your upcoming Italy trip. Ask me anything — try \"what's the weather like?\"",
+      type: 'text',
+      content:
+        "Hi Emma — your TravelZero account is connected. Try asking me to plan a trip using your actual profile data.",
     },
   ]);
   const [input, setInput] = useState('');
   const [thinking, setThinking] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  // Keyed by add-on id, since any of the three suggestions can be booked independently.
-  const [bookings, setBookings] = useState({});
+  const [phase, setPhase] = useState('idle');
+
   const endRef = useRef(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, showSuggestions, bookings]);
+  }, [messages, thinking]);
 
-  const pushMessage = (msg) => setMessages((prev) => [...prev, msg]);
+  const pushMsg = useCallback((msg) => {
+    const id = msg.id ?? Math.random().toString(36).slice(2);
+    setMessages((prev) => [...prev, { ...msg, id }]);
+    return id;
+  }, []);
 
-  const respondToWeather = () => {
-    pushMessage({
-      from: 'gemini',
-      content:
-        "It's looking exceptionally nice for your dates in Italy: sunny and mid-70s the whole trip. Given the forecast, a few outdoor experiences would pair really well with your itinerary.",
-    });
-    setShowSuggestions(true);
-  };
+  const updateMsg = useCallback((id, newData) => {
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, data: newData } : m)));
+  }, []);
 
-  const respondToPacking = () => {
-    pushMessage({
-      from: 'gemini',
-      content:
-        "For Italy in summer, reach for light linen layers, comfortable walking shoes, and a scarf that covers both style and church dress codes. Sunscreen and a refillable water bottle are non-negotiable. A carry-on keeps things streamlined if you're moving between cities.",
-    });
-  };
+  const runPhase1 = useCallback(async () => {
+    setPhase('running_1');
 
-  const respondToAddOns = () => {
-    pushMessage({
-      from: 'gemini',
-      content:
-        "Your Italy itinerary is looking solid. Given the forecast, a few outdoor experiences would pair really well with your dates and weather window. I've pulled the ones that fit.",
-    });
-    setShowSuggestions(true);
-  };
-
-  const respondToLoyalty = () => {
-    pushMessage({
-      from: 'gemini',
-      content:
-        "I can see your TravelZero loyalty balance, and you have enough points to meaningfully offset one of these experiences. The Tuscany wine tasting at $95 would use the fewest points if you'd rather stretch them further.",
-    });
-    setShowSuggestions(true);
-  };
-
-  const respondToTrip = () => {
-    pushMessage({
-      from: 'gemini',
-      content:
-        "I'm keeping an eye on your Italy trip, and the forecast is looking excellent for your dates. Want me to suggest some experiences that would work well with the weather?",
-    });
-  };
-
-  const send = (text) => {
-    if (!text || thinking) return;
-    pushMessage({ from: 'user', content: text });
-    setInput('');
-    setThinking(true);
-
-    setTimeout(() => {
+    const say = async (content, delay = 900) => {
+      setThinking(true);
+      await sleep(delay);
       setThinking(false);
-      if (/weather|forecast/i.test(text)) {
-        respondToWeather();
-      } else if (/pack|outfit|luggage|clothes|bring/i.test(text)) {
-        respondToPacking();
-      } else if (/suggest|add.?on|experience|activity/i.test(text)) {
-        respondToAddOns();
-      } else if (/loyalty|points|reward/i.test(text)) {
-        respondToLoyalty();
-      } else if (/itinerary|trip|plan|schedule/i.test(text)) {
-        respondToTrip();
-      } else {
-        pushMessage({
-          from: 'gemini',
-          content: "I'm mainly keeping an eye on your Italy trip right now. Try asking about the weather, what to pack, or whether I can suggest any add-ons.",
-        });
-      }
-    }, 700);
-  };
+      pushMsg({ from: 'gemini', type: 'text', content });
+    };
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    send(input.trim());
-  };
+    await say(
+      "Looking into it. I'm pulling your TravelZero profile first because I work from your actual data, not guesses.",
+      800,
+    );
 
-  const handleBookAddOn = async (addOn) => {
-    pushMessage({ from: 'user', content: `Let's do "${addOn.name}" — it's almost my birthday, might as well treat myself!` });
-    setBookings((prev) => ({ ...prev, [addOn.id]: { status: 'booking', receipt: null, error: null } }));
-
-    if (isAnonymous || !user) {
-      setBookings((prev) => ({ ...prev, [addOn.id]: { status: 'error', receipt: null, error: 'not_authenticated' } }));
-      pushMessage({
-        from: 'gemini',
-        content: "I don't have permission to book that yet — you'll need to sign in to TravelZero first so I can act on your behalf.",
-      });
-      return;
-    }
-
+    setThinking(true);
+    await sleep(1400);
+    let profile = MOCK_PROFILE;
     try {
-      const result = await api.agentBook('gemini', {
-        name: addOn.name,
-        description: addOn.description,
-        cost: addOn.cost,
-        type: addOn.type,
-      });
-      setBookings((prev) => ({ ...prev, [addOn.id]: { status: 'success', receipt: result.bookingReceipt, error: null } }));
-      pushMessage({
-        from: 'gemini',
-        content: `Done — I booked "${addOn.name}" on TravelZero for you. Happy birthday! 🎉`,
-      });
-    } catch (error) {
-      setBookings((prev) => ({ ...prev, [addOn.id]: { status: 'error', receipt: null, error: error?.error || 'booking_failed' } }));
-      pushMessage({
-        from: 'gemini',
-        content: "That booking didn't go through on TravelZero's end — mind trying again from there directly?",
-      });
+      profile = await api.getUcpProfile();
+    } catch {}
+    setThinking(false);
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'profile', data: profile });
+
+    await say(
+      "You've already been circling London: flights on the 5th through the 9th, The Curtain Hotel in Shoreditch. Let me check what that week actually looks like.",
+      1000,
+    );
+
+    setThinking(true);
+    await sleep(1100);
+    setThinking(false);
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'weather' });
+
+    await say(
+      "London in September usually means drizzle and grey skies. This particular week is shaping up to be an unexpected heatwave. That shifts what makes sense for your itinerary.",
+      800,
+    );
+
+    await sleep(400);
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'recs' });
+
+    await say(
+      "Given your outdoor interests and the forecast, here are three things you hadn't been considering. Each one's matched to the weather and your profile.",
+      700,
+    );
+
+    await sleep(600);
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'birthday' });
+
+    await say(
+      "Your trip ends September 9th, two days before your birthday. A sunset cruise runs evenings along the Thames. Extend through the 11th, and you'd be on it for your birthday.",
+      700,
+    );
+
+    await say(
+      "Extending adds two nights at The Curtain, an updated return flight, and the cruise. Total with loyalty points: $1,720. Still under $2,000.",
+      600,
+    );
+
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'offer' });
+
+    setPhase('awaiting_confirm');
+  }, [pushMsg]);
+
+  const runPhase2 = useCallback(async () => {
+    setPhase('running_2');
+
+    pushMsg({ from: 'user', type: 'text', content: 'Yes — extend the trip and book everything.' });
+
+    setThinking(true);
+    await sleep(600);
+    setThinking(false);
+    pushMsg({ from: 'gemini', type: 'text', content: 'On it.' });
+
+    await sleep(500);
+    const progressId = Math.random().toString(36).slice(2);
+    pushMsg({
+      id: progressId,
+      from: 'gemini',
+      type: 'panel',
+      panel: 'booking_progress',
+      data: {
+        items: [
+          { id: 'flight', label: 'Updated return flight (Sep 5 → Sep 11)', status: 'done' },
+          { id: 'hotel', label: 'The Curtain Hotel — 2 extra nights', status: 'done' },
+          {
+            id: 'cruise',
+            label: 'Thames Sunset Cruise via Thames Cruises Ltd',
+            status: 'loading',
+            note: 'retrieving partner credential…',
+          },
+        ],
+      },
+    });
+
+    await sleep(1600);
+
+    let result = mockLondonBooking(user?.email);
+    try {
+      result = await api.agentBookLondon();
+    } catch {}
+
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'vault', data: result.receipt });
+
+    await sleep(800);
+
+    updateMsg(progressId, {
+      items: [
+        { id: 'flight', label: 'Updated return flight (Sep 5 → Sep 11)', status: 'done' },
+        { id: 'hotel', label: 'The Curtain Hotel — 2 extra nights', status: 'done' },
+        { id: 'cruise', label: 'Thames Sunset Cruise via Thames Cruises Ltd', status: 'done' },
+      ],
+    });
+
+    await sleep(400);
+    pushMsg({ from: 'gemini', type: 'panel', panel: 'receipt', data: result });
+
+    await sleep(600);
+    pushMsg({
+      from: 'gemini',
+      type: 'text',
+      content:
+        "Done. I've updated your stay at The Curtain through the 11th, confirmed the cruise for your birthday evening, and everything's locked in with one confirmation. Safe travels.",
+    });
+
+    setPhase('complete');
+  }, [pushMsg, updateMsg, user]);
+
+  const handleSendLondon = useCallback(() => {
+    if (phase !== 'idle') return;
+    pushMsg({ from: 'user', type: 'text', content: LONDON_PROMPT });
+    runPhase1();
+  }, [phase, pushMsg, runPhase1]);
+
+  const handleCustomSend = (e) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || phase !== 'idle') return;
+    setInput('');
+    if (/london|trip|plan|weekend|travel/i.test(text)) {
+      pushMsg({ from: 'user', type: 'text', content: text });
+      runPhase1();
+    } else {
+      pushMsg({ from: 'user', type: 'text', content: text });
+      setTimeout(() => {
+        pushMsg({
+          from: 'gemini',
+          type: 'text',
+          content:
+            "Try the London planning prompt above — that's where I can show you what I can do with your profile.",
+        });
+      }, 700);
     }
+  };
+
+  const renderPanel = (msg) => {
+    switch (msg.panel) {
+      case 'profile':
+        return <ProfilePanel data={msg.data} />;
+      case 'weather':
+        return <WeatherPanel />;
+      case 'recs':
+        return <RecsPanel />;
+      case 'birthday':
+        return <BirthdayPanel />;
+      case 'offer':
+        return (
+          <ExtendOfferPanel
+            onConfirm={runPhase2}
+            notAuthenticated={!user || isAnonymous}
+            disabled={phase !== 'awaiting_confirm'}
+          />
+        );
+      case 'booking_progress':
+        return <BookingProgressPanel items={msg.data.items} />;
+      case 'vault':
+        return <VaultPanel data={msg.data} />;
+      case 'receipt':
+        return <ReceiptPanel receipt={msg.data.receipt} bookings={msg.data.bookings} />;
+      default:
+        return null;
+    }
+  };
+
+  const renderMsg = (msg) => {
+    if (msg.type === 'text') {
+      return (
+        <Bubble key={msg.id} from={msg.from}>
+          {msg.content}
+        </Bubble>
+      );
+    }
+    if (msg.type === 'panel') {
+      return (
+        <div key={msg.id} className={cn(s.row, s.rowGemini)}>
+          <div className={s.panelWrap}>{renderPanel(msg)}</div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -202,114 +683,42 @@ export default function Gemini() {
       </header>
 
       <main className={s.main}>
-        {messages.map((msg, idx) => (
-          <Bubble key={idx} from={msg.from}>
-            {msg.content}
-          </Bubble>
-        ))}
+        {messages.map(renderMsg)}
 
         {thinking && (
-          <Bubble from="gemini">
-            <Loader2 size={16} className="spin" />
-          </Bubble>
-        )}
-
-        {showSuggestions && (
-          <div className={s.suggestions}>
-            {ADD_ONS.map((addOn) => {
-              const Icon = addOn.icon;
-              const state = bookings[addOn.id] || { status: 'idle' };
-              const isBooked = state.status === 'success';
-              return (
-                <div key={addOn.id} className={s.suggestion}>
-                  <div className={s.suggestionTop}>
-                    <div className={s.suggestionInfo}>
-                      <span className={s.suggestionIcon}>
-                        <Icon size={16} />
-                      </span>
-                      <div>
-                        <p className={s.suggestionName}>{addOn.name}</p>
-                        <p className={s.suggestionDesc}>{addOn.description}</p>
-                      </div>
-                    </div>
-                    <div className={s.suggestionRight}>
-                      <span className={s.price}>${addOn.cost}</span>
-                      <Button
-                        size="sm"
-                        variant={isBooked ? 'secondary' : 'default'}
-                        disabled={state.status === 'booking' || isBooked}
-                        onClick={() => handleBookAddOn(addOn)}
-                      >
-                        {isBooked ? 'Booked' : 'Book this for me'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {isBooked && state.receipt && (
-                    <div className={s.receipt}>
-                      <div className={s.receiptHead}>
-                        <span className={s.receiptHeadChip}>
-                          <ShieldCheck size={14} />
-                        </span>
-                        Delegated booking authorized via TravelZero
-                      </div>
-                      <dl className={s.receiptGrid}>
-                        {[
-                          ['agent', state.receipt.agentIdentity],
-                          ['delegatedScope', state.receipt.delegatedScope.join(', ')],
-                          [
-                            'actorClaim',
-                            `sub=${state.receipt.actorClaim.sub.substring(0, 10)}… act.sub=${state.receipt.actorClaim.act.sub}`,
-                          ],
-                          [
-                            'tokenVault',
-                            `${state.receipt.tokenVault.tokenReference} (expires in ${state.receipt.tokenVault.expiresIn}s)`,
-                          ],
-                          ['mcp.tool', state.receipt.mcp.toolInvoked],
-                        ].map(([k, v]) => (
-                          <React.Fragment key={k}>
-                            <dt className={s.receiptKey}>{k}</dt>
-                            <dd className={s.receiptVal}>{v}</dd>
-                          </React.Fragment>
-                        ))}
-                      </dl>
-                    </div>
-                  )}
-
-                  {state.status === 'error' && state.error === 'not_authenticated' && (
-                    <div className={s.authWarn}>
-                      Sign in to TravelZero, then come back and I can book on your behalf.{' '}
-                      <Link to="/login">Open TravelZero login</Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className={cn(s.row, s.rowGemini)}>
+            <div className={cn(s.bubble, s.bubbleGemini)}>
+              <Loader2 size={16} className="spin" />
+            </div>
           </div>
         )}
 
         <div ref={endRef} />
       </main>
 
-      <div className={s.chips}>
-        <div className={s.chipsInner}>
-          {SUGGESTED_PROMPTS.map((p) => (
-            <button key={p} type="button" className={s.chip} onClick={() => send(p)}>
-              {p}
+      {phase === 'idle' && (
+        <div className={s.chips}>
+          <div className={s.chipsInner}>
+            <button type="button" className={cn(s.chip, s.chipFeatured)} onClick={handleSendLondon}>
+              {LONDON_PROMPT}
             </button>
-          ))}
+          </div>
         </div>
-      </div>
-      <form onSubmit={handleSend} className={s.composer}>
+      )}
+
+      <form onSubmit={handleCustomSend} className={s.composer}>
         <div className={s.composerInner}>
-          <CloudSun size={16} className={s.composerIcon} />
+          <Sparkles size={16} className={s.composerIcon} />
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Gemini anything…"
+            placeholder={
+              phase === 'idle' ? 'Ask Gemini anything, or use the prompt above…' : ''
+            }
+            disabled={phase !== 'idle'}
             className={s.composerInput}
           />
-          <Button type="submit" size="icon" disabled={!input.trim() || thinking}>
+          <Button type="submit" size="icon" disabled={!input.trim() || phase !== 'idle'}>
             <Send size={16} />
           </Button>
         </div>

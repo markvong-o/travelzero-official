@@ -110,6 +110,40 @@ const store = {
     { id: 'amalfi',  name: 'Amalfi Coast',region: 'Campania', color: 'amalfi',  tagline: 'Cliff-Hanging Views' },
     { id: 'tuscany', name: 'Tuscany',     region: 'Toscana',  color: 'tuscany', tagline: 'Rolling Hills & Wine' },
   ];
+  // London browsing history — used by the Gemini agentic commerce demo to show
+  // personalized recommendations based on what Emma was already considering.
+  demoUser.user_metadata.recentlyViewed = {
+    flights: {
+      route: 'JFK → LHR',
+      outbound: 'Sep 5, 2026',
+      inbound: 'Sep 9, 2026',
+      priceUSD: 420,
+      airline: 'British Airways',
+      flightNumber: 'BA 178',
+      nights: 4,
+    },
+    hotel: {
+      name: 'The Curtain Hotel',
+      location: 'Shoreditch, London',
+      pricePerNightUSD: 160,
+      nights: 4,
+      totalUSD: 640,
+      checkIn: '2026-09-05',
+      checkOut: '2026-09-09',
+    },
+  };
+  demoUser.user_metadata.birthday = '2026-09-11';
 }
+
+// Partner registry for Token Vault demo. Thames Cruises Ltd is a TravelZero partner
+// whose API credential was stored once at integration time — no per-booking consent.
+store.partners = {
+  'thames-cruises': {
+    id: 'thames-cruises',
+    name: 'Thames Cruises Ltd',
+    type: 'experience_partner',
+    apiEndpoint: 'https://api.thamescruises.example.com/v1',
+  },
+};
 
 export default store;
