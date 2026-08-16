@@ -79,16 +79,17 @@ function renderPasskeyFirst() {
       <button type="submit" class="tz-btn-primary">${iconKey()} Continue with passkey</button>
     </form>
     <div class="tz-divider"><span>or</span></div>
-    <button type="button" class="tz-btn-ghost" id="password-toggle">Sign up with email + password →</button>
+    <button type="button" class="tz-btn-ghost" id="password-toggle">Sign up with email instead →</button>
     <form id="password-signup-form" class="tz-form tz-hidden" novalidate>
       <input type="email" name="username" id="username-password" placeholder="your@email.com" autocomplete="email" required />
-      <input type="password" name="password" id="password-field" placeholder="Password (min 8 characters)" autocomplete="new-password" required minlength="8" />
-      <button type="submit" class="tz-btn-secondary">Create account</button>
+      <button type="submit" class="tz-btn-secondary">Continue with email</button>
     </form>
   `;
 }
 
 function renderPasswordFirst() {
+  // signup-id only collects the identifier — password is captured on the
+  // subsequent signup-password screen. Both variants submit { username } only.
   return `
     <div class="tz-head">
       <h1>Create your account</h1>
@@ -96,8 +97,7 @@ function renderPasswordFirst() {
     </div>
     <form id="password-signup-form" class="tz-form" novalidate>
       <input type="email" name="username" id="username-main" placeholder="your@email.com" autocomplete="email" required />
-      <input type="password" name="password" id="password-main" placeholder="Password (min 8 characters)" autocomplete="new-password" required minlength="8" />
-      <button type="submit" class="tz-btn-primary">Create account</button>
+      <button type="submit" class="tz-btn-primary">Continue with email</button>
     </form>
     <div class="tz-divider"><span>or</span></div>
     <button type="button" class="tz-btn-ghost" id="passkey-option">${iconKey()} Sign up with passkey instead</button>
@@ -127,8 +127,7 @@ function renderBranded(theme, ctx) {
           </div>
           <form id="password-signup-form" class="app-form" novalidate>
             <input type="email" name="username" id="username-main" placeholder="Email address" autocomplete="email" required />
-            <input type="password" name="password" id="password-main" placeholder="Password" autocomplete="new-password" required />
-            <button type="submit" class="app-btn-primary">Create account</button>
+            <button type="submit" class="app-btn-primary">Continue</button>
           </form>
           <p class="app-alt">Already have an account? <a href="${loginUrl}">Sign in</a></p>
         </div>
@@ -159,13 +158,12 @@ function wireHandlers(screen) {
     });
   }
 
-  // Password form submission — handles both TravelZero password-first and branded
+  // signup-id only collects the identifier — password comes on the next screen
   if (passwordSignupForm) {
     passwordSignupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = val('username-main') || val('username-password');
-      const password = val('password-main') || val('password-field');
-      await submit(screen, { username, password });
+      await submit(screen, { username });
     });
   }
 
