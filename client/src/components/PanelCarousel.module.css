@@ -1,0 +1,73 @@
+.panel {
+  display: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 0.6s ease;
+}
+
+.slideActive {
+  opacity: 1;
+}
+
+.slideHidden {
+  opacity: 0;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(2, 6, 23, 0.88) 0%,
+    rgba(2, 6, 23, 0.35) 45%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  padding: 3rem;
+  color: #fff;
+  gap: 1.5rem;
+}
+
+.dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background-color 0.2s, width 0.3s;
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.dotActive {
+  background: #fff;
+  width: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .panel { display: block; }
+}

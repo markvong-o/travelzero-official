@@ -1,0 +1,112 @@
+.sidebar {
+  display: none;
+  width: 15rem;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--background);
+}
+
+.brand {
+  display: flex;
+  height: 3.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+.brand:hover { color: var(--foreground); }
+.brandIcon { color: var(--primary); }
+
+.nav {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  transition: background-color 0.15s, color 0.15s;
+}
+.link:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.linkActive {
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+.linkActive:hover {
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+.linkLabel {
+  flex: 1 1 0;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-top: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+.account:hover {
+  background: var(--muted);
+}
+
+.accountInfo {
+  min-width: 0;
+  flex: 1 1 0;
+}
+.accountEmail {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.accountPts {
+  font-size: var(--font-size-xs);
+  color: var(--muted-foreground);
+}
+.accountPtsValue {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.chevron {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.menuLabel {
+  font-weight: 500;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 768px) {
+  .sidebar { display: flex; }
+}
+@media (min-width: 1024px) {
+  .sidebar { width: 16rem; }
+}

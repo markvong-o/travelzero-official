@@ -23,13 +23,11 @@ const authenticateUser = (req) => {
  * GET /api/experiments/passkey-test
  * Returns aggregated statistics for the passkey vs password signup experiment.
  *
- * Honesty note: as of this writing, Auth0 has no shipped, publicly-documented product
- * literally named "Experiment Center" — this is a conceptual/forward-looking feature in
- * this demo, not a real Auth0 dashboard screen. The closest thing you could build today
- * with real Auth0 primitives is: an Auth0 Action on the post-signup/post-login flow that
- * tags each user with an experiment bucket (e.g. via `user_metadata` or an Action-set
- * claim), combined with your own analytics pipeline to compute completion rates — which
- * is exactly what this endpoint simulates against real in-memory signup events below.
+ * Note: Auth0 Experiment Center is a real (beta) product on dev tenants — it provides
+ * native A/B testing of auth flows with automatic traffic splitting, variant assignment
+ * via Actions (`event.experiment`), and results in tenant logs under `details.experiment`.
+ * This endpoint simulates that same concept against in-memory signup events, serving as
+ * the data layer for the Experiment Center admin UI in this demo.
  */
 router.get('/passkey-test', (req, res) => {
   const user = authenticateUser(req);

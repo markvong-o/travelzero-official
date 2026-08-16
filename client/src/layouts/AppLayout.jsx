@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import s from './AppLayout.module.css';
 
 const MOBILE_NAV_ITEMS = [
   { to: '/', label: 'Browse', icon: Compass },
@@ -18,10 +19,9 @@ const MOBILE_NAV_ITEMS = [
   { to: '/admin/experiments', label: 'Experiments', icon: FlaskConical },
 ];
 
-// Shell for the authenticated app (Dashboard/Assistant/Experiments): a
-// persistent sidebar on md+ screens, a hamburger fallback below that, and
-// the single place that gates these routes on a known user — individual
-// pages no longer need their own isAnonymous redirect effect.
+// Shell for the authenticated app: a persistent sidebar on md+ screens, a
+// hamburger fallback below that, and the single place that gates these routes
+// on a known user.
 export default function AppLayout() {
   const { isAnonymous, loading } = useAuth();
   const navigate = useNavigate();
@@ -34,43 +34,34 @@ export default function AppLayout() {
   }, [loading, isAnonymous, navigate, location.pathname]);
 
   if (loading || isAnonymous) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
+    return <div className={s.loading}>Loading…</div>;
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className={s.shell}>
       <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4 md:hidden">
+      <div className={s.main}>
+        <header className={s.mobileHeader}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                className="rounded-md p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                aria-label="Open navigation menu"
-              >
-                <Menu className="size-5" />
+              <button className={s.hamburger} aria-label="Open navigation menu">
+                <Menu size={20} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuContent align="start" style={{ width: '12rem' }}>
               {MOBILE_NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-                <DropdownMenuItem key={to} asChild>
-                  <Link to={to} className="gap-2">
-                    <Icon className="size-4" />
+                <DropdownMenuItem key={to} asChild className={s.menuItem}>
+                  <Link to={to}>
+                    <Icon size={16} />
                     <span>{label}</span>
                   </Link>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <span className="text-sm font-medium text-foreground">TravelZero</span>
+          <span className={s.mobileTitle}>TravelZero</span>
         </header>
-        {/* min-h-0 lets a page opt into its own internal scroll region (the
-            Assistant chat) instead of growing the whole shell. */}
-        <main className="min-h-0 flex-1 overflow-auto">
+        <main className={s.content}>
           <Outlet />
         </main>
       </div>
@@ -78,11 +69,11 @@ export default function AppLayout() {
         asChild
         size="sm"
         variant="secondary"
-        className="fixed bottom-6 right-6 z-40 gap-2 rounded-full shadow-lg"
+        className={s.fab}
         title="Preview TravelZero the way Emma sees it on her phone"
       >
         <Link to={`/mobile?preview=${encodeURIComponent(location.pathname)}`}>
-          <Smartphone className="size-4" />
+          <Smartphone size={16} />
           View as Mobile App
         </Link>
       </Button>

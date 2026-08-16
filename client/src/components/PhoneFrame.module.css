@@ -1,0 +1,56 @@
+.frame {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 3rem));
+  height: min(844px, calc(100vh - 4rem));
+  border: 12px solid #1a1a1a;
+  border-radius: clamp(1.5rem, 5vw, 2.75rem);
+  background: #1a1a1a;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+/* Notch bar is a real row in the flex column — content inside the iframe
+   starts naturally below it, no env(safe-area-inset-top) needed. */
+.notchBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.75rem;
+  background: #fff;
+  border-radius: 0;
+}
+
+.notch {
+  width: 7rem;
+  height: 1.375rem;
+  border-radius: 0 0 1rem 1rem;
+  background: #1a1a1a;
+}
+
+.viewport {
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--background);
+}
+
+.homeBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  background: #fff;
+}
+
+.home {
+  width: 7rem;
+  height: 0.3rem;
+  border-radius: var(--radius-full);
+  background: #1a1a1a;
+}

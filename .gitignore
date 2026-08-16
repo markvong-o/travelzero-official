@@ -4,3 +4,6 @@ dist
 .env.local
 .DS_Store
 *.log
+
+# mkcert local TLS certificates — never commit private keys
+*.pem

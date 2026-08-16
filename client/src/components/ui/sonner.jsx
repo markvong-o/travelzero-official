@@ -1,47 +1,27 @@
-"use client"
-
-import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner";
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({
-  ...props
-}) => {
-  const { theme = "system" } = useTheme()
+const iconStyle = { width: "1rem", height: "1rem" };
 
+const Toaster = ({ ...props }) => {
   return (
     <Sonner
-      theme={theme}
-      className="toaster group"
+      theme="light"
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <CircleCheckIcon style={iconStyle} />,
+        info: <InfoIcon style={iconStyle} />,
+        warning: <TriangleAlertIcon style={iconStyle} />,
+        error: <OctagonXIcon style={iconStyle} />,
+        loading: <Loader2Icon className="spin" style={iconStyle} />,
       }}
-      style={
-        {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)"
-        }
-      }
+      style={{
+        "--normal-bg": "var(--popover)",
+        "--normal-text": "var(--popover-foreground)",
+        "--normal-border": "var(--border)",
+        "--border-radius": "var(--radius-lg)",
+      }}
       toastOptions={{
-        classNames: {
-          toast: "cn-toast border border-border shadow-[var(--surface-shadow)]",
-        },
+        style: { boxShadow: "var(--elevation-lg)" },
       }}
       {...props} />
   );

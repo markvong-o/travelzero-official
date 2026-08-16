@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="{{locale}}">
+
+  <head>
+    <title>Welcome to {{ application.name }} </title>
+    {%- auth0:head -%}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400;1,9..40,500&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --prompt-width: 500px;
+      }
+
+      {% if application.id == "hcdbZhVfBel0gNCKIuQvOF1BQq1lj7Pw" %}
+      /* Admin Portal — "Ocean Authority", widget on the right */
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/1F5A5.png')
+      }
+      body {
+        background-image: url('https://images.unsplash.com/photo-1563198797-31e0a0dc15c0?q=80&w=1152&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end;
+      }
+      :root {
+        --primary-color: #1A5276;
+        --primary-color-hover: #154360;
+        --widget-background-color: rgba(255, 255, 255, 0.92);
+        --link-color: #2E86C1;
+        --border-color: #AED6F1;
+        --button-text-color: #FFFFFF;
+        --text-color: #1C2833;
+        --secondary-text-color: #566573;
+      }
+
+      {% elsif application.id == "HwndmOtFBfo9WS0kkZNwlJ5kIXeYm89R" %}
+      /* Patient Portal — "Trusted Care", widget on the left */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1581056771107-24ca5f033842?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-start;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/E30A.png')
+      }
+      :root {
+        --primary-color: #2471A3;
+        --primary-color-hover: #1A5276;
+        --widget-background-color: rgba(255, 255, 255, 0.95);
+        --link-color: #2E86C1;
+        --border-color: #D4E6F1;
+        --button-text-color: #FFFFFF;
+        --text-color: #1C2833;
+        --secondary-text-color: #5D6D7E;
+      }
+
+      {% elsif application.id == "Z5WA5rEswuSZQ9DBuIaujhuTcKeUvQ1G" %}
+      /* Provider Portal — "Clinical Precision", widget on the right */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1655313719493-16ebe4906441?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/E307.png')
+      }
+      :root {
+        --primary-color: #4A235A;
+        --primary-color-hover: #3B1C4A;
+        --widget-background-color: rgba(255, 255, 255, 0.93);
+        --link-color: #7D3C98;
+        --border-color: #E8DAEF;
+        --button-text-color: #FFFFFF;
+        --text-color: #1C2833;
+        --secondary-text-color: #6C3483;
+      }
+
+            {% elsif application.id == "Z5WA5rEswuSZQ9DBuIaujhuTcKeUvQ1G" %}
+      /* Provider Portal — "Clinical Precision", widget on the right */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1655313719493-16ebe4906441?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/E307.png')
+      }
+      :root {
+        --primary-color: #4A235A;
+        --primary-color-hover: #3B1C4A;
+        --widget-background-color: rgba(255, 255, 255, 0.93);
+        --link-color: #7D3C98;
+        --border-color: #E8DAEF;
+        --button-text-color: #FFFFFF;
+        --text-color: #1C2833;
+        --secondary-text-color: #6C3483;
+      }
+
+      {% elsif application.id == "YWLp9HeCnSnCoYwDoVWD7ZM4ozuPdiLu" %}
+      /* RxZero — Pharmacy medication ordering AI assistant */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1642055514517-7b52288890ec?q=80&w=3174&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end !important;
+      }
+      .ulp-container {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://images.unsplash.com/vector-1739806651343-d8ca4d44b6b5?q=80&w=2960&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')
+      }
+      :root {
+        --primary-color: #1A1A2E;
+        --primary-color-hover: #16213E;
+        --widget-background-color: rgba(255, 255, 255, 0.95);
+        --link-color: #1A1A2E;
+        --border-color: #E5E7EB;
+        --button-text-color: #FFFFFF;
+        --text-color: #1A1A2E;
+        --secondary-text-color: #6B7280;
+      }
+
+      {% elsif application.id == "WG6rTB9W6alqkbtKgu1LmrQ3RzmVL72C" %}
+      /* Retail0 — Premium DTC Fashion, widget on the right */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end !important;
+      }
+      .ulp-container {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/1F45C.png')
+      }
+      :root {
+        --primary-color: #1A1A2E;
+        --primary-color-hover: #16213E;
+        --widget-background-color: rgba(255, 255, 255, 0.95);
+        --link-color: #1A1A2E;
+        --border-color: #E5E7EB;
+        --button-text-color: #FFFFFF;
+        --text-color: #1A1A2E;
+        --secondary-text-color: #6B7280;
+      }
+
+      {% elsif application.id == "bbghat6Y1HQmni3mFeOZ4sSOpuOqdcRw" %}
+      /* Care0 Health — Dark theme, teal accent, widget centered */
+      body {
+        background: linear-gradient(135deg, #0a0a0a 0%, #111111 40%, #0a1a1a 100%);
+        justify-content: center;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/E30A.png')
+      }
+      :root {
+        --primary-color: #0d9488;
+        --primary-color-hover: #0f766e;
+        --widget-background-color: rgba(23, 23, 23, 0.95);
+        --link-color: #2dd4bf;
+        --border-color: rgba(255, 255, 255, 0.08);
+        --button-text-color: #FFFFFF;
+        --text-color: #f5f5f5;
+        --secondary-text-color: #a1a1aa;
+      }
+      /* Dark widget overrides */
+      .ulp-container {
+        border-color: rgba(255, 255, 255, 0.06) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 80px rgba(13, 148, 136, 0.04) !important;
+      }
+      /* Input fields: dark surfaces */
+      input[type="email"],
+      input[type="password"],
+      input[type="text"],
+      input[type="tel"],
+      .ulp-input {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #a1a1aa !important;
+      }
+      input::placeholder {
+        color: #71717a !important;
+      }
+      input:focus {
+        border-color: #0d9488 !important;
+        box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2) !important;
+      }
+      /* Labels and text */
+      label, .ulp-label {
+        color: #a1a1aa !important;
+      }
+      h1, h2, h3, .ulp-header {
+        color: #f5f5f5 !important;
+      }
+      p, .ulp-description {
+        color: #a1a1aa !important;
+      }
+      /* Dividers */
+      .ulp-alternative-separator {
+        color: #52525b !important;
+      }
+      .ulp-alternative-separator::before,
+      .ulp-alternative-separator::after {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      /* Social / alternate login buttons */
+      .ulp-button-social,
+      .ulp-button-alternate {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #f5f5f5 !important;
+      }
+      .ulp-button-social:hover,
+      .ulp-button-alternate:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+      }
+      /* Error states */
+      .ulp-error {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(239, 68, 68, 0.3) !important;
+        color: #fca5a5 !important;
+      }
+
+      {% elsif application.id == "Sf9FmZInlomeJpEoxnCyKE00s46pmFL2" %}
+      /* Travel0 — Warm sunset palette, glass morphism, widget on the left */
+      body {
+        background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1173&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-start;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/2708.png');
+      }
+      :root {
+        --primary-color: #FF9F43;
+        --primary-color-hover: #F08C2E;
+        --widget-background-color: rgba(255, 255, 255, 0.75);
+        --link-color: #E8590C;
+        --border-color: rgba(255, 159, 67, 0.18);
+        --button-text-color: #FFFFFF;
+        --text-color: #1A1A2E;
+        --secondary-text-color: #6B7280;
+      }
+      * {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      }
+      .ulp-container {
+        background: rgba(255, 255, 255, 0.75) !important;
+        backdrop-filter: blur(24px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        box-shadow: 0 4px 32px -4px rgba(255, 159, 67, 0.10),
+                    0 1px 6px -1px rgba(0, 0, 0, 0.04) !important;
+      }
+      /* Glass highlight edge along the top */
+      .ulp-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        pointer-events: none;
+      }
+      /* Input fields: warm-tinted glass */
+      input[type="email"],
+      input[type="password"],
+      input[type="text"],
+      input[type="tel"],
+      .ulp-input {
+        background-color: rgba(255, 247, 237, 0.6) !important;
+        border: 1.5px solid rgba(255, 159, 67, 0.15) !important;
+        border-radius: 12px !important;
+        color: #1A1A2E !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      input::placeholder {
+        color: #9CA3AF !important;
+      }
+      input:focus {
+        border-color: #FF9F43 !important;
+        box-shadow: 0 0 0 3px rgba(255, 159, 67, 0.15) !important;
+        outline: none !important;
+      }
+      /* Primary button: sunset gradient */
+      button[type="submit"],
+      .ulp-button-default {
+        background: linear-gradient(135deg, #FF9F43 0%, #FF6B6B 100%) !important;
+        border: none !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+        box-shadow: 0 0 48px -8px rgba(255, 159, 67, 0.35) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      button[type="submit"]:hover,
+      .ulp-button-default:hover {
+        background: linear-gradient(135deg, #F08C2E 0%, #FF5252 100%) !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 12px 48px -8px rgba(255, 159, 67, 0.4),
+                    0 4px 16px -4px rgba(0, 0, 0, 0.06) !important;
+      }
+      /* Social / alternate login buttons: frosted glass */
+      .ulp-button-social,
+      .ulp-button-alternate {
+        background: rgba(255, 255, 255, 0.5) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+        border-radius: 12px !important;
+        color: #1A1A2E !important;
+        font-weight: 600 !important;
+        transition: background 0.2s ease, border-color 0.2s ease !important;
+      }
+      .ulp-button-social:hover,
+      .ulp-button-alternate:hover {
+        background: rgba(255, 255, 255, 0.7) !important;
+        border-color: rgba(255, 159, 67, 0.25) !important;
+      }
+      /* Labels and headings */
+      label, .ulp-label {
+        color: #6B7280 !important;
+        font-weight: 500 !important;
+      }
+      h1, h2, h3, .ulp-header {
+        color: #1A1A2E !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.025em !important;
+      }
+      /* Links: warm accent */
+      a {
+        color: #E8590C !important;
+        font-weight: 600 !important;
+      }
+      a:hover {
+        color: #C2410C !important;
+      }
+      /* Dividers */
+      .ulp-alternative-separator {
+        color: #9CA3AF !important;
+      }
+      .ulp-alternative-separator::before,
+      .ulp-alternative-separator::after {
+        background-color: rgba(255, 159, 67, 0.12) !important;
+      }
+      /* Error states */
+      .ulp-error {
+        background-color: rgba(255, 71, 87, 0.08) !important;
+        border: 1.5px solid rgba(255, 71, 87, 0.25) !important;
+        border-radius: 12px !important;
+        color: #DC2626 !important;
+      }
+
+      {% elsif application.id == "pPpzuafGUgTFF7Q1dQcZZ6rd1lVbnUZf" %}
+      /* RetailZero — Pastel retail, purple glass, widget on the right */
+      * {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      }
+      body {
+        background-image: url('https://images.unsplash.com/photo-1607082350899-7e105aa886ae?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+        justify-content: flex-end;
+      }
+      #custom-prompt-logo {
+        background-image: url('https://markvong-o.github.io/openmoji-icons/1F6D2.png')
+      }
+      :root {
+        --primary-color: #4016A0;
+        --primary-color-hover: #341580;
+        --widget-background-color: #191919;
+        --link-color: #B49BFC;
+        --border-color: rgba(180, 155, 252, 0.1);
+        --button-text-color: #FFFFFF;
+        --text-color: #f5f5f5;
+        --secondary-text-color: #a3a3a3;
+      }
+      /* Translucent dark widget */
+      .ulp-container {
+        background: rgba(25, 25, 25, 0.8) !important;
+        backdrop-filter: blur(40px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3) !important;
+      }
+      /* Primary button: purple gradient with glow */
+      button[type="submit"],
+      .ulp-button-default {
+        background: linear-gradient(135deg, #4016A0 0%, #7C3AED 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.01em !important;
+        box-shadow: 0 4px 24px -4px rgba(124, 58, 237, 0.35) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      button[type="submit"]:hover,
+      .ulp-button-default:hover {
+        background: linear-gradient(135deg, #341580 0%, #6D28D9 100%) !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 8px 32px -4px rgba(124, 58, 237, 0.45),
+                    0 4px 12px -4px rgba(0, 0, 0, 0.1) !important;
+      }
+      /* Input fields: dark surfaces */
+      input[type="email"],
+      input[type="password"],
+      input[type="text"],
+      input[type="tel"],
+      .ulp-input {
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        background-clip: padding-box !important;
+        border: 1.5px solid rgba(200, 200, 200, 0.4) !important;
+        border-radius: 12px !important;
+        color: #1a1a2e !important;
+        outline: none !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+      }
+      input::placeholder {
+        color: #9CA3AF !important;
+      }
+      input:focus {
+        border-color: #B49BFC !important;
+        box-shadow: 0 0 0 3px rgba(180, 155, 252, 0.25) !important;
+        outline: none !important;
+      }
+      /* Labels and text */
+      label, .ulp-label {
+        color: #a3a3a3 !important;
+        font-weight: 500 !important;
+      }
+      h1, h2, h3, .ulp-header {
+        color: #f5f5f5 !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.025em !important;
+      }
+      p, .ulp-description {
+        color: #a3a3a3 !important;
+      }
+      /* Dividers */
+      .ulp-alternative-separator {
+        color: #52525b !important;
+      }
+      .ulp-alternative-separator::before,
+      .ulp-alternative-separator::after {
+        background-color: #333333 !important;
+      }
+      /* Social / alternate login buttons */
+      .ulp-button-social,
+      .ulp-button-alternate {
+        background: #242424 !important;
+        border: 1.5px solid #333333 !important;
+        border-radius: 12px !important;
+        color: #f5f5f5 !important;
+        font-weight: 600 !important;
+        transition: background 0.2s ease, border-color 0.2s ease !important;
+      }
+      .ulp-button-social:hover,
+      .ulp-button-alternate:hover {
+        background: #2a2a2a !important;
+        border-color: rgba(180, 155, 252, 0.3) !important;
+      }
+      /* Links */
+      a {
+        color: #B49BFC !important;
+        font-weight: 600 !important;
+      }
+      a:hover {
+        color: #c9b5fd !important;
+      }
+      /* Error states */
+      .ulp-error {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border: 1.5px solid rgba(239, 68, 68, 0.3) !important;
+        border-radius: 12px !important;
+        color: #fca5a5 !important;
+      }
+
+      {% else %}
+      /* Default — neutral, minimal, centered */
+      body {
+        background: #F3F4F6;
+        justify-content: center;
+      }
+      :root {
+        --primary-color: #111827;
+        --primary-color-hover: #1F2937;
+        --widget-background-color: #FFFFFF;
+        --link-color: #4B5563;
+        --border-color: #E5E7EB;
+        --button-text-color: #FFFFFF;
+        --text-color: #111827;
+        --secondary-text-color: #6B7280;
+      }
+      .ulp-container {
+        background: #FFFFFF !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid #E5E7EB !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+      }
+
+      {% endif %}
+
+      /* Shared styles */
+      body {
+        display: flex;
+        min-height: 100vh;
+        margin: 0;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+      .ulp-container {
+        min-height: 100vh;
+        border-radius: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color, #E5E7EB);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      button[type="submit"],
+      .ulp-button-default {
+        background-color: var(--primary-color) !important;
+        color: var(--button-text-color) !important;
+        border-radius: 8px !important;
+        transition: background-color 0.2s ease;
+      }
+      button[type="submit"]:hover,
+      .ulp-button-default:hover {
+        background-color: var(--primary-color-hover) !important;
+      }
+      a {
+        color: var(--link-color) !important;
+      }
+    </style>
+
+  </head>
+
+  <body class="_widget-auto-layout _use-custom-prompt-logo">
+    {%- auth0:widget -%}
+  </body>
+
+</html>

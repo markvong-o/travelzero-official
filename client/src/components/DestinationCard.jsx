@@ -1,70 +1,64 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Heart, MapPin, Thermometer } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Button } from '@/components/ui/button';
+import { cn, destinationGradient } from '@/lib/utils';
+import s from './DestinationCard.module.css';
 
 export function DestinationCard({ destination, onBook, isFavorite = false, onFavoriteToggle }) {
   const { isAnonymous } = useAuth();
   const { showToast } = useToast();
-  const [favorited, setFavorited] = useState(isFavorite);
 
   const handleFavorite = () => {
-    if (isAnonymous) {
-      showToast('Sign up to add favorites', 'info');
-      return;
+    onFavoriteToggle?.(destination, !isFavorite);
+    if (isAnonymous && !isFavorite) {
+      showToast(`${destination.name} saved — sign up to keep your favorites`, 'info');
     }
-    setFavorited(!favorited);
-    onFavoriteToggle?.(destination, !favorited);
   };
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10 transition-all hover:shadow-lg hover:ring-foreground/20">
-      <div className="relative aspect-video w-full overflow-hidden">
-        {/* bg-{color} is a destination gradient defined in styles/theme.css —
-            it shows through until the photo loads. */}
-        <div className={`size-full bg-${destination.color}`}>
+    <div className={s.card}>
+      <div className={s.media}>
+        {/* Destination gradient shows through until the photo loads. */}
+        <div className={s.fallback} style={{ background: destinationGradient(destination.color) }}>
           <img
-            src={`/images/destinations/${destination.id}.jpg`}
+            src={destination.imageUrl || `/images/destinations/${destination.id}.jpg`}
             alt={destination.name}
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={s.photo}
             loading="lazy"
           />
         </div>
+        <div className={s.scrim} />
         <button
           type="button"
           onClick={handleFavorite}
-          title={favorited ? 'Remove from favorites' : 'Add to favorites'}
-          className={`absolute right-4 top-4 flex size-10 items-center justify-center rounded-full shadow-sm ring-1 ring-foreground/10 transition-transform hover:scale-110 ${
-            favorited ? 'bg-accent text-accent-foreground' : 'bg-card text-muted-foreground'
-          }`}
+          title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          className={cn(s.fav, isFavorite ? s.favOn : s.favOff)}
         >
-          <Heart className={`size-4 ${favorited ? 'fill-current' : ''}`} />
+          <Heart className={cn(s.favIcon, isFavorite && s.favIconOn)} />
         </button>
+        <div className={s.caption}>
+          <p className={s.tagline}>{destination.tagline}</p>
+          <h3 className={s.name}>{destination.name}</h3>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 p-6">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent">
-            {destination.tagline}
-          </p>
-          <h3 className="text-xl font-semibold text-foreground">{destination.name}</h3>
-        </div>
-
-        <div className="flex gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <MapPin className="size-3.5 shrink-0" />
+      <div className={s.body}>
+        <div className={s.meta}>
+          <span className={s.metaItem}>
+            <MapPin />
             {destination.region}
           </span>
-          <span className="flex items-center gap-1.5">
-            <Thermometer className="size-3.5 shrink-0" />
+          <span className={s.metaItem}>
+            <Thermometer />
             {destination.climate}
           </span>
         </div>
 
-        <p className="flex-1 text-sm leading-relaxed text-slate-700">{destination.description}</p>
+        <p className={s.description}>{destination.description}</p>
 
-        <Button onClick={() => onBook(destination)} className="mt-auto w-full" size="lg">
+        <Button onClick={() => onBook(destination)} variant="brand" size="lg" className={s.cta}>
           Book This Trip
         </Button>
       </div>

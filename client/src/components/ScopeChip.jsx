@@ -1,24 +1,18 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
+import s from './ScopeChip.module.css';
 
 export function ScopeChip({ label, scopes, variant = 'default' }) {
   const highlight = variant === 'highlight';
 
   return (
-    <div
-      className={`inline-flex flex-col gap-2 rounded-lg border p-4 ${
-        highlight
-          ? 'border-l-4 border-accent/30 border-l-accent bg-accent/5'
-          : 'border-border bg-muted'
-      }`}
-    >
-      <div className="text-sm font-semibold text-primary">{label}</div>
+    <div className={cn(s.chip, highlight && s.highlight)}>
+      {highlight && <div className={s.accentBar} />}
+      <div className={cn(s.label, highlight && s.labelInset)}>{label}</div>
       {scopes?.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className={cn(s.scopes, highlight && s.scopesInset)}>
           {scopes.map((scope) => (
-            <span
-              key={scope}
-              className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-xs font-medium"
-            >
+            <span key={scope} className={s.scope}>
               {scope}
             </span>
           ))}

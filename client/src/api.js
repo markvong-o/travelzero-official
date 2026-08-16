@@ -58,10 +58,10 @@ class APIClient {
   }
 
   // Auth endpoints
-  signup(email, method, password = null, sessionId = null) {
+  signup(email, method, password = null, sessionId = null, favorites = null, syncOnly = false) {
     return this.request('/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ email, method, password, sessionId }),
+      body: JSON.stringify({ email, method, password, sessionId, favorites, syncOnly }),
     });
   }
 
@@ -101,6 +101,13 @@ class APIClient {
   removeFavorite(id) {
     return this.request(`/account/favorites/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  syncFavorites(userId, favorites) {
+    return this.request('/account/favorites/sync', {
+      method: 'PUT',
+      body: JSON.stringify({ userId, favorites }),
     });
   }
 

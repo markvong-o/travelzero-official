@@ -1,0 +1,4 @@
+travel0.idzero.mvbuilt.com {
+	tls travel0.idzero.mvbuilt.com.pem travel0.idzero.mvbuilt.com-key.pem
+	reverse_proxy localhost:5173
+}

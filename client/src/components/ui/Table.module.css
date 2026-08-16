@@ -1,0 +1,55 @@
+.container {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  caption-side: bottom;
+  font-size: var(--font-size-sm);
+  border-collapse: collapse;
+}
+
+.header tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.body tr:last-child {
+  border-bottom: 0;
+}
+
+.footer {
+  border-top: 1px solid var(--border);
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+  font-weight: 500;
+}
+
+.row {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s;
+}
+.row:hover {
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+}
+
+.head {
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.cell {
+  padding: 0.5rem;
+  vertical-align: middle;
+}
+
+.caption {
+  margin-top: 1rem;
+  font-size: var(--font-size-sm);
+  color: var(--muted-foreground);
+}

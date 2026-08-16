@@ -1,0 +1,80 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  background: var(--background);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+}
+
+.mobileHeader {
+  display: flex;
+  height: 3.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.hamburger {
+  display: flex;
+  padding: 0.5rem;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  transition: background-color 0.2s, color 0.2s;
+}
+.hamburger:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.mobileTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* min-height:0 lets a page opt into its own internal scroll region (the
+   Assistant chat) instead of growing the whole shell. */
+.content {
+  min-height: 0;
+  flex: 1 1 0;
+  overflow: auto;
+}
+
+.fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 40;
+  gap: 0.5rem;
+  border-radius: var(--radius-full);
+  box-shadow: var(--elevation-lg);
+}
+
+.menuItem {
+  gap: 0.5rem;
+}
+
+.loading {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 768px) {
+  .mobileHeader { display: none; }
+}
+
+@media (max-width: 767px) {
+  .fab { display: none; }
+}

@@ -1,58 +1,105 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Auth0Provider } from '@auth0/auth0-react';
-import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
-import { ToastContainer } from './components/Toast';
-import PublicLayout from './layouts/PublicLayout';
-import AppLayout from './layouts/AppLayout';
-import FocusedLayout from './layouts/FocusedLayout';
-import Browse from './pages/Browse';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import Assistant from './pages/Assistant';
-import ExperimentCenter from './pages/ExperimentCenter';
-import SecurityInterstitial from './pages/SecurityInterstitial';
-import Gemini from './pages/Gemini';
-import MobileApp from './pages/MobileApp';
-import { isAuth0Configured, getAuth0Config } from './lib/auth-config';
-import './styles/index.css';
-import './styles/theme.css';
-import './styles/global.css';
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+} from "react-router-dom";
+import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
+import { Auth0ComponentProvider } from "@auth0/universal-components-react/spa";
+import "@auth0/universal-components-react/styles";
+import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import { ExperimentProvider } from "./context/ExperimentContext";
+import { ToastContainer } from "./components/Toast";
+import PublicLayout from "./layouts/PublicLayout";
+import AppLayout from "./layouts/AppLayout";
+import FocusedLayout from "./layouts/FocusedLayout";
+import Browse from "./pages/Browse";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import Assistant from "./pages/Assistant";
+import ExperimentCenter from "./pages/ExperimentCenter";
+import SecurityInterstitial from "./pages/SecurityInterstitial";
+import Gemini from "./pages/Gemini";
+import MobileApp from "./pages/MobileApp";
+import { isAuth0Configured, getAuth0Config } from "./lib/auth-config";
+import "./styles/index.css";
+import "./styles/theme.css";
+import "./styles/global.css";
 
 function AppRoutes() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <div className="app">
-          <Routes>
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<Browse />} />
-            </Route>
+    <ExperimentProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <div className="app">
+            <Routes>
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<Browse />} />
+              </Route>
 
-            <Route element={<FocusedLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/security-interstitial" element={<SecurityInterstitial />} />
-            </Route>
+              <Route element={<FocusedLayout />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/security-interstitial"
+                  element={<SecurityInterstitial />}
+                />
+                <Route
+                  path="/callback"
+                  element={
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100vh",
+                        color: "var(--muted-foreground)",
+                        fontSize: "var(--font-size-sm)",
+                      }}
+                    >
+                      Signing you in…
+                    </div>
+                  }
+                />
+              </Route>
 
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/assistant" element={<Assistant />} />
-              <Route path="/admin/experiments" element={<ExperimentCenter />} />
-            </Route>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/assistant" element={<Assistant />} />
+                <Route
+                  path="/admin/experiments"
+                  element={<ExperimentCenter />}
+                />
+              </Route>
 
-            {/* Gemini mocks an external app with delegated access — it stays
+              {/* Gemini mocks an external app with delegated access — it stays
                 outside every layout so it never wears TravelZero's chrome. */}
-            <Route path="/gemini" element={<Gemini />} />
-            <Route path="/mobile" element={<MobileApp />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <ToastContainer />
-        </div>
-      </ToastProvider>
-    </AuthProvider>
+              <Route path="/gemini" element={<Gemini />} />
+              <Route path="/mobile" element={<MobileApp />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <ToastContainer />
+          </div>
+        </ToastProvider>
+      </AuthProvider>
+    </ExperimentProvider>
+  );
+}
+
+function Auth0UniversalComponentsWrapper({ domain, children }) {
+  const authContext = useAuth0();
+  return (
+    <Auth0ComponentProvider
+      domain={domain}
+      themeSettings={{ theme: "default", mode: "light" }}
+      authContext={authContext}
+    >
+      {children}
+    </Auth0ComponentProvider>
   );
 }
 
@@ -67,12 +114,20 @@ function Auth0ProviderWithRedirect({ children }) {
       domain={domain}
       clientId={clientId}
       authorizationParams={{
-        redirect_uri: window.location.origin,
-        ...(audience ? { audience } : {}),
+        redirect_uri: `${window.location.origin}/callback`,
+        audience,
+        scope: "openid profile email offline_access",
       }}
-      onRedirectCallback={(appState) => navigate(appState?.returnTo || window.location.pathname)}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
+      useMrrt={true}
+      onRedirectCallback={(appState) =>
+        navigate(appState?.returnTo || "/dashboard")
+      }
     >
-      {children}
+      <Auth0UniversalComponentsWrapper domain={domain}>
+        {children}
+      </Auth0UniversalComponentsWrapper>
     </Auth0Provider>
   );
 }

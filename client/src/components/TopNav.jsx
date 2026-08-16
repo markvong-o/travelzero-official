@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Compass, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isAuth0Configured, getAuth0Config } from '../lib/auth-config';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,11 +14,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import s from './TopNav.module.css';
 
 // Public-surface nav — sits above Browse (and the auth pages). The
-// authenticated app (Dashboard/Assistant/Experiments) uses AppSidebar
-// instead, so this only needs a logo, the demo-mode indicator, and an
-// entry point into the auth routes or the app shell.
+// authenticated app (Dashboard/Assistant/Experiments) uses AppSidebar instead.
 export function TopNav() {
   const { user, isAnonymous, sessionId, logout } = useAuth();
   const navigate = useNavigate();
@@ -29,26 +28,26 @@ export function TopNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-border bg-background">
-      <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4 md:px-6">
-        <Link to="/" className="flex shrink-0 items-center gap-2 text-lg font-medium tracking-tight text-foreground">
-          <Compass className="size-5 text-primary" />
+    <nav className={s.nav}>
+      <div className={s.inner}>
+        <Link to="/" className={s.logo}>
+          <Compass size={20} className={s.logoIcon} />
           TravelZero
         </Link>
 
         <Badge
           variant="secondary"
-          className="hidden shrink-0 text-[10px] font-normal md:inline-flex"
+          className={s.demoBadge}
           title={isAuth0Configured() ? `Connected to ${getAuth0Config().domain}` : 'Running against the mock Auth0 server'}
         >
           {isAuth0Configured() ? `Connected: ${getAuth0Config().domain}` : 'Demo Mode'}
         </Badge>
 
-        <div className="flex-1" />
+        <div className={s.spacer} />
 
         {isAnonymous ? (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="hidden gap-1.5 font-normal sm:inline-flex">
+          <div className={s.group}>
+            <Badge variant="secondary" className={s.guestBadge}>
               Guest &bull; {sessionId?.substring(0, 6)}
             </Badge>
             <Button asChild variant="ghost" size="sm">
@@ -59,30 +58,27 @@ export function TopNav() {
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              <span className="font-medium text-accent">{user?.loyaltyPoints?.toLocaleString() || 0}</span> pts
+          <div className={`${s.group} ${s.groupWide}`}>
+            <span className={s.pts}>
+              <span className={s.ptsValue}>{user?.loyaltyPoints?.toLocaleString() || 0}</span> pts
             </span>
             <Button asChild variant="outline" size="sm">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 rounded-full transition hover:opacity-80">
+                <button className={s.avatarTrigger}>
                   <Avatar>
-                    <AvatarImage src="https://i.pravatar.cc/64?img=47" alt="" />
-                    <AvatarFallback>{user?.email?.[0]?.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{user?.email?.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <ChevronDown className="size-3.5 text-muted-foreground" />
+                  <ChevronDown size={14} className={s.chevron} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="truncate font-medium text-foreground">
-                  {user?.email}
-                </DropdownMenuLabel>
+              <DropdownMenuContent align="end" style={{ width: '14rem' }}>
+                <DropdownMenuLabel className={s.menuLabel}>{user?.email}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={handleLogout} className="gap-2">
-                  <LogOut className="size-4" />
+                <DropdownMenuItem onSelect={handleLogout}>
+                  <LogOut size={16} />
                   <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

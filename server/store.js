@@ -100,4 +100,16 @@ const store = {
   },
 };
 
+// Pre-seed the demo user so Google login works on a fresh server start.
+// Emma's favorites give the Dashboard a non-empty state out of the box.
+{
+  const demoUser = store.createUser('emma@demo.travelzero.com', 'passkey');
+  demoUser.loyaltyPoints = 10000;
+  demoUser.user_metadata.favorites = [
+    { id: 'rome',    name: 'Rome',        region: 'Lazio',    color: 'rome',    tagline: 'The Eternal City' },
+    { id: 'amalfi',  name: 'Amalfi Coast',region: 'Campania', color: 'amalfi',  tagline: 'Cliff-Hanging Views' },
+    { id: 'tuscany', name: 'Tuscany',     region: 'Toscana',  color: 'tuscany', tagline: 'Rolling Hills & Wine' },
+  ];
+}
+
 export default store;

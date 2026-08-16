@@ -25,6 +25,17 @@ const PORT = 4001;
 app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    const color = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m';
+    console.log(`${color}${req.method} ${req.path}\x1b[0m ${status} ${ms}ms${req.body && Object.keys(req.body).length ? ' ' + JSON.stringify(req.body) : ''}`);
+  });
+  next();
+});
+
 // Routes
 app.use('/api/session', sessionRoutes);
 app.use('/api/auth', authRoutes);

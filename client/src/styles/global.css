@@ -1,41 +1,144 @@
-/* Element resets. Component styling lives in Tailwind utilities and the
-   shadcn primitives under components/ui — nothing app-level belongs here. */
+/* Minimal modern reset — replaces Tailwind Preflight now that Tailwind is gone.
+   No cascade layers anywhere, so the earlier unlayered-override bug cannot recur. */
 
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--color-neutral-50);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--foreground);
+  background-color: var(--background);
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
 }
 
 button {
-  font-family: inherit;
-  font-size: inherit;
-  border: none;
   cursor: pointer;
-  border-radius: var(--radius-lg);
-  transition: all 0.2s;
-  font-weight: 500;
+  background: none;
+  border: none;
 }
 
 button:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Default text-field appearance. Inputs are full-width by default (the app's
+   forms all want that); flex contexts still size them via flex. Component
+   modules can override border/background where needed (chat inputs, etc.). */
 input,
 textarea {
-  font-family: inherit;
-  font-size: inherit;
+  width: 100%;
   border: 1px solid var(--color-neutral-300);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
-  transition: border-color 0.2s;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(79, 60, 240, 0.12);
+}
+
+input:disabled,
+textarea:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--color-primary-light);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 550;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+h1 { font-size: var(--font-size-4xl); }
+h2 { font-size: var(--font-size-3xl); }
+h3 { font-size: var(--font-size-2xl); }
+h4 { font-size: var(--font-size-xl); }
+
+/* Display treatment for hero and page titles. Sets weight/tracking/line-height
+   only — never font-size — so pair it with an explicit size in the module. */
+.font-display {
+  font-weight: var(--font-weight-display);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+/* Spinner — replaces Tailwind's animate-spin (used on loading icons). */
+@keyframes tz-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: tz-spin 1s linear infinite;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background);
 }

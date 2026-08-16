@@ -1,0 +1,55 @@
+.chip {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.highlight {
+  border-color: color-mix(in oklch, var(--primary) 20%, transparent);
+  background: var(--gradient-brand-soft);
+  box-shadow: var(--elevation-brand);
+}
+
+.accentBar {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 4px;
+  background: var(--gradient-brand);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.labelInset {
+  padding-left: 0.25rem;
+}
+
+.scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.scopesInset {
+  padding-left: 0.25rem;
+}
+
+.scope {
+  padding: 0.125rem 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--card);
+}

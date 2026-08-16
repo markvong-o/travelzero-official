@@ -1,0 +1,269 @@
+.page {
+  display: flex;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.headerBadges { display: flex; gap: 0.375rem; }
+.title { font-size: var(--font-size-3xl); color: var(--foreground); }
+
+.intro {
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  max-width: 56rem;
+}
+
+/* ── Experiment list table ── */
+.tableWrap { padding: 0; }
+
+.experimentRow {
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+.experimentRow:hover { background: color-mix(in oklch, var(--muted) 50%, transparent); }
+.experimentRowSelected { background: color-mix(in oklch, var(--primary) 6%, transparent); }
+.experimentRowSelected:hover { background: color-mix(in oklch, var(--primary) 9%, transparent); }
+
+.expName {
+  font-weight: 500;
+  color: var(--foreground);
+  display: block;
+}
+.winnerTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Status badges */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.statusActive    { background: color-mix(in oklch, var(--accent) 15%, transparent); color: var(--accent); }
+.statusPaused    { background: color-mix(in oklch, var(--color-neutral-500) 15%, transparent); color: var(--muted-foreground); }
+.statusCompleted { background: color-mix(in oklch, var(--primary) 12%, transparent); color: var(--primary); }
+
+/* Flow chips */
+.flowChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  border: 1px solid;
+}
+.flowSignup    { color: var(--primary);  border-color: color-mix(in oklch, var(--primary) 30%, transparent);  background: color-mix(in oklch, var(--primary) 8%, transparent); }
+.flowPostLogin { color: var(--accent);   border-color: color-mix(in oklch, var(--accent) 30%, transparent);   background: color-mix(in oklch, var(--accent) 8%, transparent); }
+.flowMfa       { color: #d97706;         border-color: color-mix(in oklch, #d97706 30%, transparent);          background: color-mix(in oklch, #d97706 8%, transparent); }
+
+.split { font-variant-numeric: tabular-nums; font-size: var(--font-size-sm); color: var(--muted-foreground); }
+.metricLabel { font-size: var(--font-size-xs); color: var(--muted-foreground); }
+.right { text-align: right; }
+
+/* ── Detail view ── */
+.detailHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.detailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.splitLabel { font-size: var(--font-size-xs); color: var(--muted-foreground); }
+
+.sigChip {
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+}
+.sigChipYes { background: color-mix(in oklch, var(--accent) 12%, transparent); color: var(--accent); }
+.sigChipNo  { background: var(--muted); color: var(--muted-foreground); }
+
+.detailBody { display: flex; flex-direction: column; gap: 1.5rem; }
+
+/* ── Variant cards ── */
+.variantGrid { display: grid; gap: 1rem; }
+
+.variantCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  text-align: left;
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.variantCard:hover { border-color: color-mix(in oklch, var(--primary) 40%, transparent); }
+.variantCardActive {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 5%, var(--card));
+}
+
+.variantCardTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.variantRole {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.variantLabel { font-weight: 500; color: var(--foreground); margin-top: 0.2rem; }
+.variantRight { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+.variantValue {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--muted-foreground);
+}
+.variantValueWinner { color: var(--accent); }
+.winnerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 12%, transparent);
+  border-radius: var(--radius-full);
+}
+.variantDesc { font-size: var(--font-size-sm); line-height: 1.5; color: var(--muted-foreground); }
+.variantN { font-size: var(--font-size-xs); color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+
+/* ── Preview row ── */
+.previewRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--muted) 60%, transparent);
+}
+.previewHint { font-size: var(--font-size-sm); color: var(--muted-foreground); }
+.previewHint strong { color: var(--foreground); }
+
+/* ── Metric bars ── */
+.metricBars { display: grid; gap: 0.75rem; }
+.metricBar { display: flex; flex-direction: column; gap: 0.375rem; }
+.metricBarTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--muted-foreground);
+}
+.metricBarVal { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--foreground); }
+.metricBarValWinner { color: var(--accent); }
+
+.track { height: 0.625rem; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: var(--muted); }
+.fill  { height: 100%; border-radius: var(--radius-full); transition: width 0.5s; }
+.fillGradient { background: var(--gradient-brand); }
+.fillAccent   { background: var(--accent); }
+
+/* ── Auth0 Connected badge ── */
+.auth0Badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--accent);
+  border-color: color-mix(in oklch, var(--accent) 35%, transparent);
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
+}
+
+/* ── Assignment source banners ── */
+.assignmentBanner,
+.aculBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.assignmentBanner {
+  background: color-mix(in oklch, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent) 25%, transparent);
+}
+
+.aculBanner {
+  background: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.assignmentBannerIcon { color: var(--accent); flex-shrink: 0; margin-top: 0.15rem; }
+.aculBannerIcon       { color: var(--muted-foreground); flex-shrink: 0; margin-top: 0.15rem; }
+
+.assignmentBannerTitle,
+.aculBannerTitle {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.assignmentBannerTitle { color: var(--accent); }
+.aculBannerTitle       { color: var(--foreground); }
+
+.assignmentBannerText,
+.aculBannerText {
+  display: block;
+  color: var(--muted-foreground);
+}
+.assignmentBannerText strong { color: var(--foreground); }
+
+.selectHint {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--muted-foreground);
+  padding: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .variantGrid { grid-template-columns: repeat(2, 1fr); }
+  .metricBars  { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .page { padding: 2.5rem; }
+}

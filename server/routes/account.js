@@ -1,5 +1,6 @@
 import express from 'express';
 import store from '../store.js';
+import { isAuth0Configured, patchUserMetadata } from '../lib/auth0-management.js';
 
 const router = express.Router();
 
@@ -154,6 +155,33 @@ router.delete('/favorites/:id', (req, res) => {
  * for the real Auth0 feature this is modeled on — Attack Protection, not a distinct
  * "AI agent" product).
  */
+/**
+ * PUT /api/account/favorites/sync
+ * Writes the full favorites array to Auth0 user_metadata for real Auth0 users.
+ * Called after every add/remove so the post-login Action can always read the
+ * latest favorites from user_metadata and stamp them into the ID token claim.
+ *
+ * Body: { userId: string (Auth0 sub), favorites: Destination[] }
+ */
+router.put('/favorites/sync', async (req, res) => {
+  const { userId, favorites } = req.body;
+
+  if (!userId || !Array.isArray(favorites)) {
+    return res.status(400).json({ error: 'userId and favorites array required' });
+  }
+
+  if (!isAuth0Configured()) {
+    return res.status(503).json({ error: 'Auth0 not configured' });
+  }
+
+  try {
+    await patchUserMetadata(userId, { favorites });
+    res.json({ success: true, favorites });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
 router.post('/share-itinerary', (req, res) => {
   const user = authenticateUser(req);
   if (!user) {

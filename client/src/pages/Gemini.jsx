@@ -4,7 +4,16 @@ import { Sparkles, CloudSun, Sailboat, Wine, Loader2, ShieldCheck, Send } from '
 import { useAuth } from '../context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import api from '../api.js';
+import s from './Gemini.module.css';
+
+const SUGGESTED_PROMPTS = [
+  "What's the weather like in Italy?",
+  "What should I pack for Italy?",
+  "Can you suggest some add-ons for my trip?",
+  "How can I use my loyalty points?",
+];
 
 // Mock: this page simulates a *separate, external* app (Google Gemini) that has
 // been delegated permission to act on TravelZero on the user's behalf — it is not
@@ -42,14 +51,8 @@ const ADD_ONS = [
 function Bubble({ from, children }) {
   const isGemini = from === 'gemini';
   return (
-    <div className={`flex ${isGemini ? 'justify-start' : 'justify-end'}`}>
-      <div
-        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-          isGemini ? 'bg-neutral-800 text-neutral-100' : 'bg-blue-600 text-white'
-        }`}
-      >
-        {children}
-      </div>
+    <div className={cn(s.row, isGemini ? s.rowGemini : s.rowUser)}>
+      <div className={cn(s.bubble, isGemini ? s.bubbleGemini : s.bubbleUser)}>{children}</div>
     </div>
   );
 }
@@ -79,31 +82,75 @@ export default function Gemini() {
     pushMessage({
       from: 'gemini',
       content:
-        "It's looking exceptionally nice for your dates in Italy — sunny and mid-70s the whole trip. Since the weather's this good, a few add-ons would pair really well with your itinerary:",
+        "It's looking exceptionally nice for your dates in Italy: sunny and mid-70s the whole trip. Given the forecast, a few outdoor experiences would pair really well with your itinerary.",
     });
     setShowSuggestions(true);
   };
 
-  const handleSend = (e) => {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || thinking) return;
+  const respondToPacking = () => {
+    pushMessage({
+      from: 'gemini',
+      content:
+        "For Italy in summer, reach for light linen layers, comfortable walking shoes, and a scarf that covers both style and church dress codes. Sunscreen and a refillable water bottle are non-negotiable. A carry-on keeps things streamlined if you're moving between cities.",
+    });
+  };
 
+  const respondToAddOns = () => {
+    pushMessage({
+      from: 'gemini',
+      content:
+        "Your Italy itinerary is looking solid. Given the forecast, a few outdoor experiences would pair really well with your dates and weather window. I've pulled the ones that fit.",
+    });
+    setShowSuggestions(true);
+  };
+
+  const respondToLoyalty = () => {
+    pushMessage({
+      from: 'gemini',
+      content:
+        "I can see your TravelZero loyalty balance, and you have enough points to meaningfully offset one of these experiences. The Tuscany wine tasting at $95 would use the fewest points if you'd rather stretch them further.",
+    });
+    setShowSuggestions(true);
+  };
+
+  const respondToTrip = () => {
+    pushMessage({
+      from: 'gemini',
+      content:
+        "I'm keeping an eye on your Italy trip, and the forecast is looking excellent for your dates. Want me to suggest some experiences that would work well with the weather?",
+    });
+  };
+
+  const send = (text) => {
+    if (!text || thinking) return;
     pushMessage({ from: 'user', content: text });
     setInput('');
     setThinking(true);
 
     setTimeout(() => {
       setThinking(false);
-      if (/weather|outfit|forecast/i.test(text)) {
+      if (/weather|forecast/i.test(text)) {
         respondToWeather();
+      } else if (/pack|outfit|luggage|clothes|bring/i.test(text)) {
+        respondToPacking();
+      } else if (/suggest|add.?on|experience|activity/i.test(text)) {
+        respondToAddOns();
+      } else if (/loyalty|points|reward/i.test(text)) {
+        respondToLoyalty();
+      } else if (/itinerary|trip|plan|schedule/i.test(text)) {
+        respondToTrip();
       } else {
         pushMessage({
           from: 'gemini',
-          content: "I'm mainly keeping an eye on your Italy trip right now — try asking me about the weather there.",
+          content: "I'm mainly keeping an eye on your Italy trip right now. Try asking about the weather, what to pack, or whether I can suggest any add-ons.",
         });
       }
     }, 700);
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    send(input.trim());
   };
 
   const handleBookAddOn = async (addOn) => {
@@ -141,20 +188,20 @@ export default function Gemini() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-950 text-neutral-100">
-      <header className="flex items-center justify-between border-b border-neutral-800 px-6 py-4">
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-red-400">
-            <Sparkles className="size-4 text-white" />
+    <div className={s.shell}>
+      <header className={s.header}>
+        <div className={s.brand}>
+          <span className={s.brandChip}>
+            <Sparkles size={16} />
           </span>
-          <span className="text-lg font-medium tracking-tight">Gemini</span>
+          <span className={s.brandName}>Gemini</span>
         </div>
-        <Badge variant="outline" className="border-neutral-700 text-[10px] font-normal text-neutral-400">
+        <Badge variant="outline" className={s.headerBadge}>
           Simulated external app — not affiliated with TravelZero
         </Badge>
       </header>
 
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-y-auto px-6 py-6">
+      <main className={s.main}>
         {messages.map((msg, idx) => (
           <Bubble key={idx} from={msg.from}>
             {msg.content}
@@ -163,30 +210,30 @@ export default function Gemini() {
 
         {thinking && (
           <Bubble from="gemini">
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 size={16} className="spin" />
           </Bubble>
         )}
 
         {showSuggestions && (
-          <div className="grid gap-3 sm:grid-cols-1">
+          <div className={s.suggestions}>
             {ADD_ONS.map((addOn) => {
               const Icon = addOn.icon;
               const state = bookings[addOn.id] || { status: 'idle' };
               const isBooked = state.status === 'success';
               return (
-                <div key={addOn.id} className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-9 items-center justify-center rounded-lg bg-neutral-800">
-                        <Icon className="size-4 text-neutral-300" />
+                <div key={addOn.id} className={s.suggestion}>
+                  <div className={s.suggestionTop}>
+                    <div className={s.suggestionInfo}>
+                      <span className={s.suggestionIcon}>
+                        <Icon size={16} />
                       </span>
                       <div>
-                        <p className="text-sm font-medium text-neutral-100">{addOn.name}</p>
-                        <p className="text-xs text-neutral-400">{addOn.description}</p>
+                        <p className={s.suggestionName}>{addOn.name}</p>
+                        <p className={s.suggestionDesc}>{addOn.description}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className="text-sm font-medium text-neutral-200">${addOn.cost}</span>
+                    <div className={s.suggestionRight}>
+                      <span className={s.price}>${addOn.cost}</span>
                       <Button
                         size="sm"
                         variant={isBooked ? 'secondary' : 'default'}
@@ -199,33 +246,40 @@ export default function Gemini() {
                   </div>
 
                   {isBooked && state.receipt && (
-                    <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/40 p-3 text-xs text-emerald-200">
-                      <div className="mb-2 flex items-center gap-2 font-medium text-emerald-100">
-                        <ShieldCheck className="size-4" />
+                    <div className={s.receipt}>
+                      <div className={s.receiptHead}>
+                        <span className={s.receiptHeadChip}>
+                          <ShieldCheck size={14} />
+                        </span>
                         Delegated booking authorized via TravelZero
                       </div>
-                      <div className="space-y-1 font-mono text-[11px] text-emerald-300/90">
-                        <p>agent: {state.receipt.agentIdentity}</p>
-                        <p>delegatedScope: {state.receipt.delegatedScope.join(', ')}</p>
-                        <p>
-                          actorClaim: sub={state.receipt.actorClaim.sub.substring(0, 10)}… act.sub=
-                          {state.receipt.actorClaim.act.sub}
-                        </p>
-                        <p>
-                          tokenVault: {state.receipt.tokenVault.tokenReference} (expires in{' '}
-                          {state.receipt.tokenVault.expiresIn}s)
-                        </p>
-                        <p>mcp.tool: {state.receipt.mcp.toolInvoked}</p>
-                      </div>
+                      <dl className={s.receiptGrid}>
+                        {[
+                          ['agent', state.receipt.agentIdentity],
+                          ['delegatedScope', state.receipt.delegatedScope.join(', ')],
+                          [
+                            'actorClaim',
+                            `sub=${state.receipt.actorClaim.sub.substring(0, 10)}… act.sub=${state.receipt.actorClaim.act.sub}`,
+                          ],
+                          [
+                            'tokenVault',
+                            `${state.receipt.tokenVault.tokenReference} (expires in ${state.receipt.tokenVault.expiresIn}s)`,
+                          ],
+                          ['mcp.tool', state.receipt.mcp.toolInvoked],
+                        ].map(([k, v]) => (
+                          <React.Fragment key={k}>
+                            <dt className={s.receiptKey}>{k}</dt>
+                            <dd className={s.receiptVal}>{v}</dd>
+                          </React.Fragment>
+                        ))}
+                      </dl>
                     </div>
                   )}
 
                   {state.status === 'error' && state.error === 'not_authenticated' && (
-                    <div className="rounded-lg border border-amber-800/50 bg-amber-950/40 p-3 text-xs text-amber-200">
+                    <div className={s.authWarn}>
                       Sign in to TravelZero, then come back and I can book on your behalf.{' '}
-                      <Link to="/login" className="underline">
-                        Open TravelZero login
-                      </Link>
+                      <Link to="/login">Open TravelZero login</Link>
                     </div>
                   )}
                 </div>
@@ -237,17 +291,26 @@ export default function Gemini() {
         <div ref={endRef} />
       </main>
 
-      <form onSubmit={handleSend} className="border-t border-neutral-800 bg-neutral-950 px-6 py-4">
-        <div className="mx-auto flex max-w-2xl items-center gap-2">
-          <CloudSun className="size-4 shrink-0 text-neutral-500" />
+      <div className={s.chips}>
+        <div className={s.chipsInner}>
+          {SUGGESTED_PROMPTS.map((p) => (
+            <button key={p} type="button" className={s.chip} onClick={() => send(p)}>
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+      <form onSubmit={handleSend} className={s.composer}>
+        <div className={s.composerInner}>
+          <CloudSun size={16} className={s.composerIcon} />
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Gemini anything…"
-            className="flex-1 rounded-full border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-600"
+            className={s.composerInput}
           />
           <Button type="submit" size="icon" disabled={!input.trim() || thinking}>
-            <Send className="size-4" />
+            <Send size={16} />
           </Button>
         </div>
       </form>

@@ -1,4 +1,5 @@
 import React from 'react';
+import s from './LoyaltyMeter.module.css';
 
 // Tier colors stay metallic on purpose — they read as bronze/silver/gold/
 // platinum, so they intentionally sit outside the indigo/teal brand ramp.
@@ -14,33 +15,30 @@ export function LoyaltyMeter({ points = 0, maxPoints = 100000 }) {
   const tier = TIERS.find((t) => points >= t.min);
 
   return (
-    <div className="rounded-xl bg-card p-6 shadow-sm ring-1 ring-foreground/10">
-      <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Loyalty Points</h3>
-        <span
-          className="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-900"
-          style={{ backgroundColor: tier.color }}
-        >
+    <div className={s.meter}>
+      <div className={s.wash} />
+
+      <div className={s.header}>
+        <h3 className={s.title}>Loyalty Points</h3>
+        <span className={s.tier} style={{ backgroundColor: tier.color }}>
           {tier.name}
         </span>
       </div>
 
-      <div className="mb-4 text-3xl font-bold tabular-nums tracking-tight text-accent">
-        {points.toLocaleString()}
+      <div className={s.points}>
+        <span className={s.pointsNumber}>{points.toLocaleString()}</span>
+        <span className={s.pointsUnit}>pts</span>
       </div>
 
-      <div className="mb-6 h-3 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full transition-[width] duration-500"
-          style={{ width: `${percentage}%`, background: 'var(--gradient-brand)' }}
-        />
+      <div className={s.track}>
+        <div className={s.fill} style={{ width: `${percentage}%` }} />
       </div>
 
-      <div className="flex justify-between gap-4">
+      <div className={s.tiers}>
         {[...TIERS].reverse().map((t) => (
-          <div key={t.name} className="flex flex-1 flex-col items-center gap-0.5 text-xs">
-            <span className="font-semibold text-foreground">{t.name}</span>
-            <span className="text-muted-foreground">{t.label}</span>
+          <div key={t.name} className={s.tierCol}>
+            <span className={s.tierName}>{t.name}</span>
+            <span className={s.tierLabel}>{t.label}</span>
           </div>
         ))}
       </div>

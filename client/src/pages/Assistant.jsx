@@ -1,17 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Plane } from 'lucide-react';
+import { Check, Info, Plane, Send, Loader2, X } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { ScopeChip } from '../components/ScopeChip';
+import { CiamMoment } from '../components/CiamMoment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import api from '../api.js';
+import s from './Assistant.module.css';
 
-// The second prompt leads into the loyalty-points and agent-delegation beats,
-// so keep it as the second option in the demo script.
 const SUGGESTED_PROMPTS = [
-  'Plan me a weekend in Rome under $1,500',
-  'Design a 5-day Italy itinerary using my loyalty points',
+  'Plan a 5-day Italy trip using my loyalty points',
+  'Design a romantic weekend in Rome under $1,500',
+  'Plan a Tuscany wine tour, I have 10,000 points',
+  'Plan a family week in Italy under $3,000',
+];
+
+// Keyword-matched response text — first match wins, overrides the generic server message.
+// Placeholder tokens from the itinerary object are substituted at call time.
+const CANNED_RESPONSES = [
+  {
+    pattern: /loyalty|points|reward|redeem/i,
+    message: (itin) =>
+      `You have ${itin.loyaltyPointsApplied.toLocaleString()} loyalty points applied to this itinerary, bringing your out-of-pocket cost down to $${Math.round(itin.estimatedNetCost || itin.totalCost).toLocaleString()}. Points are drawn from your TravelZero balance in real time, so there's no separate redemption step.`,
+  },
+  {
+    pattern: /romantic|anniversary|honeymoon|couple/i,
+    message: (itin) =>
+      `A romantic Italian escape, done well. I've built a ${itin.duration}-day itinerary with Tuscany and the Amalfi Coast as anchors, including private wine tastings, a sunset boat tour, and a hilltop dinner in Positano. I've applied ${itin.loyaltyPointsApplied.toLocaleString()} loyalty points, bringing your total to $${itin.totalCost.toLocaleString()}. The pace is intentionally unhurried throughout.`,
+  },
+  {
+    pattern: /family|kids|children|child/i,
+    message: (itin) =>
+      `Italy has everything families travel for: pizza-making classes where kids actually learn, gelato on every corner, and the Colosseum as a genuine spectacle. I've planned a ${itin.duration}-day itinerary that balances history, coastal beach days, and local food for $${itin.totalCost.toLocaleString()}, with each day staying at two or three highlights to keep energy and engagement right.`,
+  },
+  {
+    pattern: /wine|tasting|chianti|tuscany/i,
+    message: (itin) =>
+      `Tuscany's Chianti Classico region is one of the world's great wine corridors. I've built your ${itin.duration}-day itinerary around an al fresco tasting through countryside vineyards, a winery dinner in Greve, and a sunrise drive through the Val d'Orcia. I've applied ${itin.loyaltyPointsApplied.toLocaleString()} loyalty points, bringing your total to $${itin.totalCost.toLocaleString()}. The Gemini agent can book the wine experience as an add-on if you'd like.`,
+  },
 ];
 
 // Anonymous users never reach this page — AppLayout redirects to /login
@@ -25,7 +53,15 @@ export default function Assistant() {
   const [itinerary, setItinerary] = useState(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receipt, setReceipt] = useState(null);
+  const [metaModal, setMetaModal] = useState(null);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!metaModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMetaModal(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [metaModal]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,12 +79,19 @@ export default function Assistant() {
     setLoading(true);
 
     try {
-      const response = await api.chat(userMessage);
+      const [response] = await Promise.all([
+        api.chat(userMessage),
+        new Promise((r) => setTimeout(r, 3000)),
+      ]);
+      const cannedMatch = CANNED_RESPONSES.find((r) => r.pattern.test(userMessage));
+      const messageText = cannedMatch
+        ? cannedMatch.message(response.itinerary)
+        : response.message;
       setMessages((prev) => [
         ...prev,
         {
           type: 'assistant',
-          text: response.message,
+          text: messageText,
           metadata: response.agentMetadata,
           itinerary: response.itinerary,
         },
@@ -109,37 +152,31 @@ export default function Assistant() {
   };
 
   return (
-    <div className="grid h-full min-h-0 gap-6 p-6 lg:grid-cols-3 lg:p-8">
-      {/* Deliberately not a <Card>: Card injects py-4 + gap-4 on its root,
-          which breaks the min-h-0 scroll contract for the message list. */}
-      <div className="flex min-h-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 lg:col-span-2">
-        <div className="shrink-0 border-b border-border px-6 py-4">
-          <h1 className="text-lg font-semibold text-foreground">Travel Assistant</h1>
-          <p className="text-sm text-muted-foreground">
-            Plan your perfect Italian getaway with AI
-          </p>
+    <div className={s.grid}>
+      <div className={s.chat}>
+        <div className={s.chatHead}>
+          <h1 className={s.chatTitle}>Travel Assistant</h1>
+          <p className={s.chatSubtitle}>Plan your perfect Italian getaway with AI</p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+        <div className={s.messages}>
           {messages.length === 0 ? (
-            <div className="m-auto flex max-w-sm flex-col items-center text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-accent/10">
-                <Plane className="size-5 text-accent" />
+            <div className={s.emptyState}>
+              <div className={s.emptyIcon}>
+                <Plane size={20} />
               </div>
-              <h2 className="mt-4 text-base font-semibold text-foreground">
-                Start Planning Your Trip
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h2 className={s.emptyTitle}>Start Planning Your Trip</h2>
+              <p className={s.emptyText}>
                 Describe the trip you have in mind. Pick a starting point below.
               </p>
-              <div className="mt-4 flex w-full flex-col gap-2">
+              <div className={s.prompts}>
                 {SUGGESTED_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
                     onClick={() => sendMessage(prompt)}
                     disabled={loading}
-                    className="rounded-lg bg-muted/60 px-3 py-2 text-left text-sm text-foreground ring-1 ring-transparent transition hover:bg-muted hover:ring-accent/30"
+                    className={s.prompt}
                   >
                     {prompt}
                   </button>
@@ -150,133 +187,123 @@ export default function Assistant() {
             messages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={cn(s.msgRow, msg.type === 'user' ? s.msgRowUser : s.msgRowAssistant)}
               >
                 <div
-                  className={`max-w-[85%] rounded-xl px-4 py-3 text-sm ${
-                    msg.type === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
-                  }`}
+                  className={cn(s.bubble, msg.type === 'user' ? s.bubbleUser : s.bubbleAssistant)}
                 >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
-                  {msg.metadata && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      <ScopeChip
-                        label={msg.metadata.agentPrincipal}
-                        scopes={msg.metadata.scopesUsed}
-                        variant="highlight"
-                      />
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span>Accessed:</span>
-                        {msg.metadata.accessLog.map((log, i) => (
-                          <span key={i} className="font-mono">
-                            {log.resource}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className={s.bubbleText}>{msg.text}</p>
                 </div>
+                {msg.metadata && (
+                  <button
+                    type="button"
+                    className={s.infoBtn}
+                    onClick={() => setMetaModal(msg.metadata)}
+                    aria-label="View agent call details"
+                  >
+                    <Info size={13} />
+                  </button>
+                )}
               </div>
             ))
+          )}
+          {loading && (
+            <div className={cn(s.msgRow, s.msgRowAssistant)}>
+              <div className={cn(s.bubble, s.bubbleAssistant, s.bubbleThinking)}>
+                <span className={s.dot} />
+                <span className={s.dot} />
+                <span className={s.dot} />
+              </div>
+            </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        <form
-          onSubmit={handleSendMessage}
-          className="flex shrink-0 gap-2 border-t border-border px-6 py-4"
-        >
+        {messages.length > 0 && (
+          <div className={s.chips}>
+            <div className={s.chipsInner}>
+              {SUGGESTED_PROMPTS.map((p) => (
+                <button key={p} type="button" className={s.chip} onClick={() => sendMessage(p)}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <form onSubmit={handleSendMessage} className={s.composer}>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Tell me about your ideal trip..."
             disabled={loading}
-            className="flex-1"
           />
-          <Button type="submit" disabled={loading} size="icon">
-            {loading ? '…' : '→'}
+          <Button type="submit" disabled={loading} size="icon" aria-label="Send message">
+            {loading ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
           </Button>
         </form>
       </div>
 
-      <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className={s.side}>
         {itinerary && (
           <Card>
             <CardHeader>
               <CardTitle>Your Itinerary</CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <dl className="flex flex-col gap-2 text-sm">
+            <CardContent>
+              <dl className={s.summary}>
                 {[
                   ['Duration', `${itinerary.duration} days`],
                   ['Cost', `$${itinerary.totalCost}`],
                   ['Points Used', itinerary.loyaltyPointsApplied],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between">
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="font-medium text-foreground">{value}</dd>
+                  <div key={label} className={s.summaryRow}>
+                    <dt className={s.summaryLabel}>{label}</dt>
+                    <dd className={s.summaryValue}>{value}</dd>
                   </div>
                 ))}
               </dl>
 
-              <div className="flex flex-col gap-2">
-                <Button onClick={handleBookItinerary} className="w-full">
+              <div className={s.sideActions} style={{ marginTop: '1rem' }}>
+                <Button onClick={handleBookItinerary} variant="brand">
                   Save to Dashboard
                 </Button>
-                <Button onClick={handleAgentBook} variant="secondary" className="w-full">
+                <Button onClick={handleAgentBook} variant="secondary">
                   Simulate: Agent Books Add-on
                 </Button>
               </div>
 
               {showReceipt && receipt && (
-                <div className="flex flex-col gap-3 rounded-lg border border-l-4 border-accent/30 border-l-accent bg-accent/5 p-4 shadow-md">
+                <CiamMoment
+                  className={s.receipt}
+                  title="Agent Booking Receipt"
+                  rows={[
+                    { label: 'External Agent', value: receipt.agentIdentity },
+                    { label: 'Delegated Scope', value: receipt.delegatedScope.join(', ') },
+                    {
+                      label: 'Actor Claim (RFC 8693)',
+                      value: `sub: ${receipt.actorClaim.sub.substring(0, 10)}… act.sub: ${receipt.actorClaim.act.sub}`,
+                      mono: true,
+                    },
+                    {
+                      label: 'Token Vault Exchange',
+                      value: `${receipt.tokenVault.tokenReference} · expires in ${receipt.tokenVault.expiresIn}s`,
+                      mono: true,
+                    },
+                    { label: 'MCP Tool', value: receipt.mcp.toolInvoked, mono: true },
+                    { label: 'MCP Resource', value: receipt.mcp.resource, mono: true },
+                  ]}
+                >
                   <img
                     src="/images/sunset-cruise.jpg"
                     alt="Sunset Cruise - Amalfi Coast"
-                    className="h-32 w-full rounded-md object-cover"
+                    className={s.receiptImg}
                   />
-                  <h4 className="text-base font-semibold text-foreground">
-                    Agent Booking Receipt
-                  </h4>
-                  {[
-                    ['External Agent', receipt.agentIdentity, false],
-                    ['Delegated Scope', receipt.delegatedScope.join(', '), false],
-                    [
-                      'Actor Claim (RFC 8693)',
-                      `sub: ${receipt.actorClaim.sub.substring(0, 10)}… act.sub: ${receipt.actorClaim.act.sub}`,
-                      true,
-                    ],
-                    [
-                      'Token Vault Exchange',
-                      `${receipt.tokenVault.tokenReference} · expires in ${receipt.tokenVault.expiresIn}s`,
-                      true,
-                    ],
-                    ['MCP Tool', receipt.mcp.toolInvoked, true],
-                    ['MCP Resource', receipt.mcp.resource, true],
-                  ].map(([label, value, mono]) => (
-                    <div key={label} className="flex flex-col gap-0.5">
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {label}
-                      </span>
-                      <span
-                        className={
-                          mono
-                            ? 'break-all font-mono text-[13px] tabular-nums text-foreground'
-                            : 'break-all text-sm font-medium text-foreground'
-                        }
-                      >
-                        {value}
-                      </span>
-                    </div>
-                  ))}
-                  <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-accent">
-                    <Check className="size-4 shrink-0" />
+                  <p className={s.receiptMsg}>
+                    <Check size={16} />
                     {receipt.message}
                   </p>
-                </div>
+                </CiamMoment>
               )}
             </CardContent>
           </Card>
@@ -294,13 +321,52 @@ export default function Assistant() {
               }}
               variant="outline"
               size="sm"
-              className="w-full"
+              style={{ width: '100%' }}
             >
               Simulate: Security Agent Detects Breach
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {metaModal && (
+        <div className={s.modalOverlay} onClick={() => setMetaModal(null)}>
+          <div className={s.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={s.modalHead}>
+              <span className={s.modalTitle}>Agent Call Details</span>
+              <button
+                type="button"
+                className={s.modalClose}
+                onClick={() => setMetaModal(null)}
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className={s.modalBody}>
+              <ScopeChip
+                label={metaModal.agentPrincipal}
+                scopes={metaModal.scopesUsed}
+                variant="highlight"
+              />
+              <div className={s.modalSection}>
+                <p className={s.modalLabel}>Resources accessed</p>
+                <div className={s.modalMonoList}>
+                  {metaModal.accessLog.map((log, i) => (
+                    <span key={i} className={s.modalMono}>{log.resource}</span>
+                  ))}
+                </div>
+              </div>
+              <div className={s.modalSection}>
+                <p className={s.modalLabel}>Actor claim (RFC 8693)</p>
+                <span className={s.modalMono}>
+                  sub: {metaModal.actorClaim.sub.substring(0, 12)}… &nbsp;·&nbsp; act.sub: {metaModal.actorClaim.act.sub}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
