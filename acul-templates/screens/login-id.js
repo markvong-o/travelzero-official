@@ -24,7 +24,7 @@ let screen, ctx, clientId, isTravelZero, experiment, isPasskeyFirst, appTheme;
 try {
   screen = new LoginId();
   ctx = window.universal_login_context;
-  clientId = ctx.client?.client_id;
+  clientId = ctx.client?.id;
   isTravelZero = clientId === TRAVELZERO_CLIENT_ID;
   experiment = ctx.experiment;
   isPasskeyFirst = isTravelZero && experiment ? !experiment.is_control : false;
