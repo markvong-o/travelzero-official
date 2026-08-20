@@ -253,6 +253,8 @@ router.get('/ucp-profile', (req, res) => {
 
   const agentId = 'agent/google-gemini';
   const rv = user.user_metadata.recentlyViewed || null;
+  const orderHistory = store.orders[user.id] || [];
+  const paymentMethods = user.user_metadata.paymentMethods || [];
 
   res.json({
     subject: user.id,
@@ -264,6 +266,8 @@ router.get('/ucp-profile', (req, res) => {
       travel_style: user.user_metadata.preferences.travelStyle,
       recently_viewed: rv,
       birthday: user.user_metadata.birthday || null,
+      order_history: orderHistory,
+      payment_methods: paymentMethods,
     },
     delegation: {
       subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
@@ -307,7 +311,7 @@ router.post('/agent-book-london', (req, res) => {
     {
       id: store.generateId(),
       type: 'flight',
-      description: 'British Airways BA 178 — JFK → LHR, Sep 5–11 (extended)',
+      description: 'British Airways BA 178 — JFK → LHR, Oct 3–8 (extended)',
       originalCost: 420,
       updatedCost: 630,
       status: 'confirmed',
@@ -315,15 +319,15 @@ router.post('/agent-book-london', (req, res) => {
     {
       id: store.generateId(),
       type: 'hotel',
-      description: 'The Curtain Hotel, Shoreditch — 6 nights (Sep 5–11)',
+      description: 'The Curtain Hotel, Shoreditch — 5 nights (Oct 3–8)',
       originalCost: 640,
-      updatedCost: 960,
+      updatedCost: 800,
       status: 'confirmed',
     },
     {
       id: store.generateId(),
       type: 'experience',
-      description: 'Thames Sunset Cruise — Sep 10, evening',
+      description: 'Thames Sunset Cruise — Oct 8, evening (birthday)',
       cost: 230,
       partner: 'Thames Cruises Ltd',
       vaultRef: tokenVaultRef,
@@ -332,7 +336,7 @@ router.post('/agent-book-london', (req, res) => {
   ];
 
   const subtotal = bookings.reduce((sum, b) => sum + (b.updatedCost ?? b.cost), 0);
-  const loyaltyApplied = Math.min(user.loyaltyPoints, 2000);
+  const loyaltyApplied = 10000;
   const loyaltyDiscount = loyaltyApplied * 0.01;
   const total = subtotal - loyaltyDiscount;
 
@@ -340,9 +344,9 @@ router.post('/agent-book-london', (req, res) => {
     id: store.generateId(),
     title: 'London — Long Weekend Extended',
     destination: 'London',
-    checkIn: '2026-09-05',
-    checkOut: '2026-09-11',
-    nights: 6,
+    checkIn: '2026-10-03',
+    checkOut: '2026-10-08',
+    nights: 5,
     bookings,
     subtotal,
     loyaltyApplied,
@@ -375,6 +379,82 @@ router.post('/agent-book-london', (req, res) => {
       },
       timestamp: new Date().toISOString(),
     },
+  });
+});
+
+/**
+ * POST /api/assistant/checkout-sessions
+ * Create a checkout session for booking the extended London trip.
+ * Returns requires_escalation if unauthenticated (user needs to link account).
+ * Returns pending if authenticated (user-scoped token available).
+ */
+router.post('/checkout-sessions', (req, res) => {
+  const user = authenticateUser(req);
+
+  if (!user) {
+    // M2M or unauthenticated — requires identity linking
+    return res.json({
+      id: 'cs_' + store.generateId().slice(0, 8),
+      status: 'requires_escalation',
+      continue_url: '/gemini/link',
+      message: 'User identity linking required to proceed',
+    });
+  }
+
+  // User authenticated with user-scoped token
+  res.json({
+    id: 'cs_' + store.generateId().slice(0, 8),
+    status: 'pending',
+    subtotal: 1820,
+    loyaltyApplied: 2000,
+    loyaltyDiscount: 100,
+    total: 1720,
+    paymentMethods: user.user_metadata.paymentMethods || [],
+    expiresAt: new Date(Date.now() + 900000).toISOString(), // 15 min
+  });
+});
+
+/**
+ * POST /api/assistant/identity-link
+ * Simulates completion of seamless account linking.
+ * Returns delegation grant that authorizes the agent to act on user's behalf.
+ */
+router.post('/identity-link', (req, res) => {
+  const user = authenticateUser(req);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const grantId = 'grant_' + store.generateId().slice(0, 8);
+  const scopes = ['read:profile', 'read:loyalty', 'read:recently_viewed', 'create:bookings'];
+  const expiresAt = new Date(Date.now() + 86400000); // 24h
+
+  res.json({
+    grantId,
+    scopes,
+    delegation: {
+      sub: user.id,
+      act: { sub: 'agent/google-gemini', name: 'Google Gemini Travel Agent' },
+    },
+    issuedAt: new Date().toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  });
+});
+
+/**
+ * POST /api/assistant/webhooks/order-status
+ * Partner callback webhook for order fulfillment updates.
+ * In production, Auth0 would verify the signature.
+ */
+router.post('/webhooks/order-status', (req, res) => {
+  const { bookingId, partnerReference, status } = req.body;
+
+  res.json({
+    received: true,
+    bookingId,
+    partnerReference,
+    status,
+    processedAt: new Date().toISOString(),
   });
 });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Compass, LayoutDashboard, Sparkles, FlaskConical, LogOut, ChevronDown } from 'lucide-react';
+import { Compass, LayoutDashboard, Sparkles, FlaskConical, MessageCircle, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import s from './AppSidebar.module.css';
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/assistant', label: 'Assistant', icon: Sparkles },
+  { to: '/gemini', label: 'Gemini', icon: MessageCircle },
   { to: '/admin/experiments', label: 'Experiments', icon: FlaskConical, admin: true },
 ];
 

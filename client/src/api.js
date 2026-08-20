@@ -17,8 +17,10 @@ class APIClient {
       ...options.headers,
     };
 
-    if (this.token) {
-      headers.Authorization = `Bearer ${this.token}`;
+    // Check localStorage each request in case token was set after instantiation
+    const token = this.token || localStorage.getItem('auth_token');
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {
@@ -164,6 +166,31 @@ class APIClient {
     return this.request('/assistant/agent-book-london', {
       method: 'POST',
       body: JSON.stringify({ externalAgentId: 'gemini' }),
+    });
+  }
+
+  createCheckoutSession() {
+    return this.request('/assistant/checkout-sessions', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  identityLink() {
+    return this.request('/assistant/identity-link', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  }
+
+  webhookOrderStatus(bookingId, status) {
+    return this.request('/assistant/webhooks/order-status', {
+      method: 'POST',
+      body: JSON.stringify({
+        bookingId,
+        status,
+        partnerReference: 'CRUISE-' + bookingId,
+      }),
     });
   }
 }

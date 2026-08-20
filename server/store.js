@@ -17,6 +17,9 @@ const store = {
   // User itineraries: { [userId]: { id, days, totalCost, loyaltyPointsApplied, bookings } }
   itineraries: {},
 
+  // Order history: { [userId]: [{ id, destination, checkIn, checkOut, nights, total, loyaltyUsed, status, bookedAt, imageUrl, color }] }
+  orders: {},
+
   // Security flags per user (to simulate breach detection)
   securityFlags: {},
 
@@ -119,8 +122,8 @@ const store = {
   demoUser.user_metadata.recentlyViewed = {
     flights: {
       route: 'JFK → LHR',
-      outbound: 'Sep 5, 2026',
-      inbound: 'Sep 9, 2026',
+      outbound: 'Oct 3, 2026',
+      inbound: 'Oct 7, 2026',
       priceUSD: 420,
       airline: 'British Airways',
       flightNumber: 'BA 178',
@@ -132,11 +135,49 @@ const store = {
       pricePerNightUSD: 160,
       nights: 4,
       totalUSD: 640,
-      checkIn: '2026-09-05',
-      checkOut: '2026-09-09',
+      checkIn: '2026-10-03',
+      checkOut: '2026-10-07',
     },
   };
   demoUser.user_metadata.birthday = '2026-09-11';
+  demoUser.user_metadata.paymentMethods = [
+    {
+      id: 'gp_default',
+      type: 'GOOGLE_PAY',
+      displayName: 'Google Pay',
+      cardLast4: '4242',
+      cardBrand: 'Visa',
+    },
+  ];
+  // Seed demo user with 2 past completed orders for order history display
+  store.orders[demoUser.id] = [
+    {
+      id: 'ord_paris_2026',
+      destination: 'Paris',
+      checkIn: '2026-06-15',
+      checkOut: '2026-06-20',
+      nights: 5,
+      total: 2400,
+      loyaltyUsed: 50,
+      status: 'completed',
+      bookedAt: '2026-06-10T10:00:00Z',
+      imageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
+      color: 'rome',
+    },
+    {
+      id: 'ord_nyc_2026',
+      destination: 'New York',
+      checkIn: '2026-03-10',
+      checkOut: '2026-03-14',
+      nights: 4,
+      total: 1800,
+      loyaltyUsed: 30,
+      status: 'completed',
+      bookedAt: '2026-03-01T08:00:00Z',
+      imageUrl: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80',
+      color: 'como',
+    },
+  ];
 }
 
 // Partner registry for Token Vault demo. Thames Cruises Ltd is a TravelZero partner
